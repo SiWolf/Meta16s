@@ -1,0 +1,28 @@
+## README
+
+# Essential:
+
+join_paired_ends.py -m fastq-join -j 6 -p 8 -f sequences/H26399-L1_S146_L001_R1_001.fastq.gz -r sequences/H26399-L1_S146_L001_R2_001.fastq.gz -o output
+
+split_libraries_fastq.py -r 3 -q 19 -n 0 -p 0.75 --barcode_type not-barcoded -i output/fastqjoin.join.fastq -o output --sample_ids 1
+
+./usearch11.0.667_i86linux32 -otutab output/seqs.fna -otus databases/gg_13_8_otus/rep_set/99_otus.fasta -id 0.97 -strand both -otutabout output/otus_about.txt -mapout output/otus_map.txt -notmatched output/otus_notmatched.fa -dbmatched output/otus_with_sizes.fa -sizeout -biomout output/otus.biom
+
+./usearch11.0.667_i86linux32 -sortbysize output/otus_with_sizes.fa -fastaout output/otus_sorted.fa -minsize 0
+
+./usearch11.0.667_i86linux32 -unoise3 output/otus_sorted.fa -minsize 0 -zotus output/zotus.fa -tabbedout output/zotus.tsv
+
+SequenceMatch seqmatch databases/rdp/ output/zotus.fa -k 1 -s 0.5 > output/seq_results.txt
+
+filter_otus_from_otu_table.py -i test_edit.biom -o out.biom -n 2
+
+# Additional:
+
+seqkit seq -m 429 -M 470 -j 32 output/fastqjoin.join.fastq > output/filtered.fastq
+
+SequenceMatch train databases/current_Bacteria_unaligned.fa databases/rdp/rdp
+
+./usearch11.0.667_i86linux32 -uchime2_ref output/seqs.fna -db databases/gg_13_8_otus/rep_set_aligned/99_otus.fasta -uchimeout output/chmfilter.txt -strand plus -mode balanced -notmatched output/chmfilter.fa
+
+mkdir merged
+for file in output/*/fastqjoin.join.fastq; do new_file=${file/output/merged}; cp "$file" "${new_file/\/fastqjoin.join/}"; done;

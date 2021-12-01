@@ -1,0 +1,198 @@
+# ---------------------------------
+# Title: Reference_Analyzer_16s.py
+# Author: Silver A. Wolf
+# Last Modified: Tue, 03.08.2021
+# Version: 0.0.8
+# ---------------------------------
+
+import glob
+import os
+
+def analyze_samples():
+	seqs = glob.glob("sequences/*_R1_001.fastq.gz")
+	
+	for read1 in seqs:
+		read2 = read1.split("_R1_001.fastq.gz")[0] + "_R2_001.fastq.gz"
+		sample_name = read1.split("/")[1].split("-")[0]
+		output_dir = "output/" + sample_name
+		
+		print("Analyzing: " + sample_name)
+		
+		os.system("join_paired_ends.py " +
+				  "-m fastq-join " +
+				  "-j 6 " +
+				  "-p 8 " +
+				  "-f " + read1 + " " +
+				  "-r " + read2 + " " +
+				  "-o " + output_dir
+				 )
+		
+		os.system("seqkit seq " +
+				  "-m 300 " +
+				  "-M 470 " +
+				  "-j 64 " +
+				  output_dir + "/fastqjoin.join.fastq " +
+				  "> " + output_dir + "/fastqjoin.filtered.fastq"
+				 )
+		
+		os.system("split_libraries_fastq.py " +
+				  "-r 3 " +
+				  "-n 0 " +
+				  "-p 0.5 " +
+				  "-q 19 " +
+				  "--barcode_type not-barcoded " +
+				  "--sample_ids " + sample_name + " " +
+				  "-i " + output_dir + "/fastqjoin.filtered.fastq " +
+				  "-o " + output_dir
+				 )
+		
+		os.system("./usearch11.0.667_i86linux32 " +
+				  "-otutab " + output_dir + "/seqs.fna " +
+				  "-otus databases/gg_13_8_otus/rep_set/99_otus.fasta " +
+				  "-id 0.97 " +
+				  "-strand both " +
+				  "-sizeout " +
+				  "-threads 64 " +
+				  "-biomout " + output_dir + "/otus.biom " +
+				  "-mapout " + output_dir + "/otus_map.txt " +
+				  "-otutabout " + output_dir + "/otus_about.txt " +
+				  "-dbmatched " + output_dir + "/otus_with_sizes.fa " +
+				  "-notmatched " + output_dir + "/otus_notmatched.fa"
+				 )
+		
+		os.system("./usearch11.0.667_i86linux32 " +
+				  "-sortbysize " + output_dir + "/otus_with_sizes.fa " +
+				  "-fastaout " + output_dir + "/otus_sorted.fa " +
+				  "-minsize 0"
+				 )
+		
+		os.system("./usearch11.0.667_i86linux32 " +
+				  "-unoise3 " + output_dir + "/otus_sorted.fa " +
+				  "-tabbedout " + output_dir + "/zotus.tsv " +
+				  "-zotus " + output_dir + "/zotus.fa " +
+				  "-minsize 0"
+				 )
+		
+		#os.system("SequenceMatch " +
+		#		  "train databases/current_Bacteria_unaligned.fa databases/rdp/rdp"
+		#		 )
+		
+		os.system("SequenceMatch " + 
+				  "seqmatch databases/rdp/ " + output_dir + "/zotus.fa " +
+				  "-k 1 " +
+				  "-s 0.5 " +
+				  "> " + output_dir + "/seq_results.txt"
+				 )
+		
+		print("Finished: " + sample_name)
+
+def create_biom_table():
+	
+	dirs = os.listdir("output")
+	tax_ids = []
+	
+	# For each sample
+	# Open its seq_results file
+	# Create list of taxids without any duplicates
+	for d in dirs:
+		rdp_results = "output/" + d + "/seq_results.txt"
+		with open(rdp_results, "r") as infile:
+			for line in infile:
+				split = line.split("\t")
+				if ((split[1] not in tax_ids) and (split[0] != "query name")):
+					tax_ids.append(split[1])
+	
+	tab = open("output/final_otu_table.tsv", "w")
+	tab.write("# Constructed from biom file\n")
+	tab.write("#OTU ID" + "\t" + "\t".join(dirs) + "\t" + "taxonomy\n")
+	
+	# For each taxid in list
+	for t in tax_ids:
+		final_line = t
+		# Go through each samples seq_results file
+		for d in dirs:
+			# Set abundance to 0
+			abundance = 0
+			rdp_results = "output/" + d + "/seq_results.txt"
+			with open(rdp_results, "r") as infile:
+				for line in infile:
+					split = line.split("\t")
+					# If id in file -> retrieve abundance from tsv
+					if split[1] == t:
+						c = 0
+						number = int(split[0].split("Zotu")[1])
+						zotu_results = "output/" + d + "/zotus.tsv"
+						with open(zotu_results, "r") as outfile:
+							for l in outfile:
+								s = l.split("\t")
+								if "zotu" in s[2]:
+									c = c + 1
+									if number == c:
+										abundance = s[0].split("size=")[1].split(";")[0]
+										break						
+			final_line = final_line + "\t" + str(abundance)
+		
+		# Once done with the abundancies, retrieve taxa information from reference fasta
+		rdp_database = "databases/current_Bacteria_unaligned.fa"
+		with open(rdp_database, "r") as db:
+			domain = "k__"
+			phylum = "p__"
+			class_tax = "c__"
+			order = "o__"
+			family = "f__"
+			genus = "g__"
+			species = "s__"
+			for entry in db:
+				if t in entry:
+					if ";domain" in entry:
+						domain = domain + entry.split(";domain")[0].split(";")[-1].replace("\"", "")
+					if ";phylum" in entry:
+						phylum = phylum + entry.split(";phylum")[0].split(";")[-1].replace("\"", "")
+					if ";class" in entry:
+						class_tax = class_tax + entry.split(";class")[0].split(";")[-1].replace("\"", "")
+					if ";order" in entry:
+						order = order + entry.split(";order")[0].split(";")[-1].replace("\"", "")
+					if ";family" in entry:
+						family = family + entry.split(";family")[0].split(";")[-1].replace("\"", "")
+					if ";genus" in entry:
+						genus = genus + entry.split(";genus")[0].split(";")[-1].replace("\"", "")
+					if ";species" in entry:
+						species = species + entry.split(";species")[0].split(";")[-1].replace("\"", "")
+					tax = domain + "; " + phylum + "; " + class_tax + "; " + order + "; " + family + "; " + genus + "; "+ species
+					break
+	
+		# Write line with abundancies per sample plus taxa information into tsv file
+		final_line = final_line + "\t" + tax + "\n"
+		tab.write(final_line)
+	
+	tab.close()
+	
+	# Export tsv to BIOM format for downstream analysis
+	os.system("biom convert " +
+			  "-i output/final_otu_table.tsv " +
+			  "-o output/final_otu_table.biom " +
+			  "--to-hdf5 " +
+			  "--table-type=\"OTU table\" " +
+			  "--process-obs-metadata taxonomy"
+			 )
+	
+	os.system("filter_otus_from_otu_table.py " +
+			  "-i output/final_otu_table.biom " +
+			  "-o output/final_otu_table_clean.biom " +
+			  "-n 2"
+			 )
+	
+	os.system("biom convert " +
+			  "-i output/final_otu_table_clean.biom " +
+			  "-o output/final_otu_table_clean.tsv " +
+			  "--to-tsv " +
+			  "--header-key taxonomy"
+			 )
+
+# Main
+def main():
+	analyze_samples()
+	create_biom_table()
+
+if __name__ == "__main__":
+	main()
