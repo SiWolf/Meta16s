@@ -68,30 +68,14 @@ data.pcoa$AB_GROUP = factor(meta.sorted[meta.sorted$SampleID %in% rownames(data.
 data.pcoa$TIMEPOINT = meta.sorted[meta.sorted$SampleID %in% rownames(data.alpha.rarefy),]$Timepoint
 
 # Export Diversities
-write.csv(data.alpha, file = "results/tab_div_alpha_raw.csv")
-write.csv(data.alpha.rarefy, file = "results/tab_div_alpha_rarefy.csv")
-write.csv(data.bray, file = "results/tab_div_beta_distance.csv")
-write.csv(data.pcoa, file = "results/tab_div_beta_pcoa.csv")
+write.csv(data.alpha, file = "results/tab_div_alpha_raw.csv", quote = FALSE)
+write.csv(data.alpha.rarefy, file = "results/tab_div_alpha_rarefy.csv", quote = FALSE)
+write.csv(data.bray, file = "results/tab_div_beta_distance.csv", quote = FALSE)
+write.csv(data.pcoa, file = "results/tab_div_beta_pcoa.csv", quote = FALSE)
 
 # Export human-readable OTU table
-data.df <- phyloseq_to_df(data.rarefy)
-
-data.df$TAXA <- paste(data.df$Rank1, data.df$Rank2, data.df$Rank3,
-                      data.df$Rank4, data.df$Rank5, data.df$Rank6,
-                      data.df$Rank7,
-                      sep = "; ")
-
-write.table(data.df, file = "results/tab_otu_old.csv", col.names = TRUE, row.names = FALSE, sep = ";", quote = FALSE)
-
-data.df.transposed <- t(data.df[,-c(2:8)])
-
-data.df.transposed <- cbind(T1 = c("AB_GROUP", as.character(data.alpha.rarefy$AB_GROUP), "TAXA"),
-                            T2 = c("TIMEPOINT", data.alpha.rarefy$TIMEPOINT, "TAXA"),
-                            T3 = c("HORSE", data.alpha.rarefy$HORSE, "TAXA"),
-                            T4 = rownames(data.df.transposed),
-                            data.df.transposed)
-
-write.table(data.df.transposed, file = "results/tab_otu.csv", col.names = FALSE, row.names = FALSE, sep = ",")
+data.otu <- phyloseq_to_df(data.rarefy)
+write.csv(data.otu, file = "results/tab_otu.csv", row.names = FALSE, quote = FALSE)
 
 # PCA
 colours.days = c("t0" = "#00BA38",
