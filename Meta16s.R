@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Fri, 03.12.2021
-# Version: 0.2.3
+# Last Modified: Tue, 18.01.2022
+# Version: 0.2.4
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -104,13 +104,16 @@ colours.groups = c("SSG" = "#00ff7f",
                    "CONTROL" = "#00bfff"
                    )
 
+eigenvalue_pc1 = round(braycurtis.pcoa$values$Relative_eig[1]*100, 1)
+eigenvalue_pc2 = round(braycurtis.pcoa$values$Relative_eig[2]*100, 1)
+
 # Timepoints - All Samples
 png("results/div_pca_time_all.png", width = 16, height = 16, units = "cm", res = 500)
 ggscatter(data.pcoa,
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "TIMEPOINT",
@@ -132,8 +135,8 @@ png("results/div_pca_time_ssg.png", width = 16, height = 16, units = "cm", res =
 ggscatter(data.pcoa[data.pcoa$AB_GROUP == "SSG", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "TIMEPOINT",
@@ -155,8 +158,8 @@ png("results/div_pca_time_5dg.png", width = 16, height = 16, units = "cm", res =
 ggscatter(data.pcoa[data.pcoa$AB_GROUP == "5DG", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "TIMEPOINT",
@@ -178,8 +181,8 @@ png("results/div_pca_time_control.png", width = 16, height = 16, units = "cm", r
 ggscatter(data.pcoa[data.pcoa$AB_GROUP == "CONTROL", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "TIMEPOINT",
@@ -201,8 +204,8 @@ png("results/div_pca_group_all.png", width = 16, height = 16, units = "cm", res 
 ggscatter(data.pcoa,
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "AB_GROUP",
@@ -224,8 +227,8 @@ png("results/div_pca_group_t0.png", width = 16, height = 16, units = "cm", res =
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t0", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "AB_GROUP",
@@ -247,8 +250,8 @@ png("results/div_pca_group_t1.png", width = 16, height = 16, units = "cm", res =
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t1", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "AB_GROUP",
@@ -270,8 +273,8 @@ png("results/div_pca_group_t2.png", width = 16, height = 16, units = "cm", res =
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t2", ],
           x = "Axis.1",
           y = "Axis.2",
-          xlab = "PC1",
-          ylab = "PC2",
+          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
+          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
           xlim = c(-0.55, 0.25),
           ylim = c(-0.4, 0.5),
           color = "AB_GROUP",
