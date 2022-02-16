@@ -1,8 +1,8 @@
 # -----------------------------------------
 # Title: Reference_Analyzer_16s.py
 # Author: Silver A. Wolf
-# Last Modified: Wed, 01.12.2021
-# Version: 0.1.3
+# Last Modified: Wed, 16.02.2022
+# Version: 0.1.4
 # -----------------------------------------
 
 import glob
@@ -12,8 +12,8 @@ import multiprocessing
 from multiprocessing import Pool
 
 def analyze_samples(read1):
-	read2 = read1.split("_R1_001.fastq.gz")[0] + "_R2_001.fastq.gz"
-	sample_name = read1.split("/")[1].split("-")[0]
+	read2 = read1.split("_R1.fastq.gz")[0] + "_R2.fastq.gz"
+	sample_name = read1.split("/")[1].split("_")[0]
 	output_dir = "output/" + sample_name
 
 	print("Analyzing: " + sample_name)
@@ -246,7 +246,7 @@ def helperfunction(list_reads):
 
 # Main
 def main():
-	seqs = glob.glob("sequences/*_R1_001.fastq.gz")
+	seqs = glob.glob("sequences/*_R1.fastq.gz")
 	
 	# Parallelize Script
 	amount_threads = 54
