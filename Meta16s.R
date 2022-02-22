@@ -1,33 +1,40 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Tue, 18.01.2022
-# Version: 0.2.4
+# Last Modified: Tue, 22.02.2022
+# Version: 0.2.5
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
 
+library("dplyr")
 library("circlize")
 library("ComplexHeatmap")
+library("ggplot2")
 library("ggpubr")
+library("kableExtra")
+library("knitr")
 library("metagMisc")
 library("microbiome")
 library("microbiomeExplorer")
+library("micropower")
 library("randomcoloR")
 library("openxlsx")
+library("parallel")
 library("phyloseq")
 library("stringr")
+library("vegan")
 
 # --------------------------------------------------------------------------------------------------------
 
 # [1] Import and preprocess analysis data
 
 # BIOM File
-data.biom <- import_biom("metadata/final_otu_table_clean.biom", parseFunction = parse_taxonomy_default)
+data.biom <- import_biom("output/final_otu_table_clean.biom", parseFunction = parse_taxonomy_default)
 
 # Metadata
-meta <- read.csv("metadata/16s_Horses_Overview_Reordered.csv", sep = "\t")
-meta.filtered <- meta[meta$Microbiome == "Gut" & meta$Type == "16s" & meta$Comment != "EXCLUDED",]
+meta <- read.xlsx("metadata/22_02_Horses_Overview.xlsx", sheet = 1)
+meta.filtered <- meta[meta$AB_Group != "SWITCHED", ]
 
 # Group order
 groups.order <- c("SSG", "5DG", "CONTROL")
@@ -41,6 +48,11 @@ sample_depth <- sort(sample_sums(data.biom))
 
 # Alpha Diversity (Raw)
 data.alpha <- microbiome::alpha(data.biom)
+
+# Plot Rarefaction Curve
+png("results/div_rarefaction_curve.png", width = 16, height = 16, units = "cm", res = 500)
+rarecurve(t(otu_table(data.biom)), step = 50, cex = 0.5)
+dev.off()
 
 # Alpha diversity (Rarefy)
 data.rarefy <- rarefy_even_depth(data.biom, rngseed = 1, sample.size = 10000, replace = FALSE, trimOTUs = FALSE)
@@ -98,8 +110,8 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -121,8 +133,8 @@ ggscatter(data.pcoa[data.pcoa$AB_GROUP == "SSG", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -144,8 +156,8 @@ ggscatter(data.pcoa[data.pcoa$AB_GROUP == "5DG", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -167,8 +179,8 @@ ggscatter(data.pcoa[data.pcoa$AB_GROUP == "CONTROL", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -190,8 +202,8 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -213,8 +225,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t0", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -236,8 +248,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t1", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -259,8 +271,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t2", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.55, 0.25),
-          ylim = c(-0.4, 0.5),
+          xlim = c(-0.25, 0.5),
+          ylim = c(-0.4, 0.4),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -451,21 +463,21 @@ ggplot(bar_data_melted, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
 dev.off()
 
 # Percentages of individual taxa
-per_taxa_total = sum(bar_data_melted$Abundance)/108
+per_taxa_total = sum(bar_data_melted$Abundance)/length(sample_depth)
 
-per_bact_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacteroidetes", ]$Abundance)/108
+per_bact_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacteroidetes", ]$Abundance)/length(sample_depth)
 per_bact_norm = (per_bact_total/per_taxa_total) * 100
 
-per_firm_total = sum(bar_data_melted[bar_data_melted$OTU == "Firmicutes", ]$Abundance)/108
+per_firm_total = sum(bar_data_melted[bar_data_melted$OTU == "Firmicutes", ]$Abundance)/length(sample_depth)
 per_firm_norm = (per_firm_total/per_taxa_total) * 100
 
-per_prot_total = sum(bar_data_melted[bar_data_melted$OTU == "Proteobacteria", ]$Abundance)/108
+per_prot_total = sum(bar_data_melted[bar_data_melted$OTU == "Proteobacteria", ]$Abundance)/length(sample_depth)
 per_prot_norm = (per_prot_total/per_taxa_total) * 100
 
-per_spir_total = sum(bar_data_melted[bar_data_melted$OTU == "Spirochaetes", ]$Abundance)/108
+per_spir_total = sum(bar_data_melted[bar_data_melted$OTU == "Spirochaetes", ]$Abundance)/length(sample_depth)
 per_spir_norm = (per_spir_total/per_taxa_total) * 100
 
-per_verr_total = sum(bar_data_melted[bar_data_melted$OTU == "Verrucomicrobia", ]$Abundance)/108
+per_verr_total = sum(bar_data_melted[bar_data_melted$OTU == "Verrucomicrobia", ]$Abundance)/length(sample_depth)
 per_verr_norm = (per_verr_total/per_taxa_total) * 100
 
 per_bact_norm
@@ -608,7 +620,57 @@ entero.ssg.diff.t1.t2 = round(entero.ssg.t2 - entero.ssg.t1, 2)
 
 # [03] Run MicrobiomeExplorer (16s/WGS)
 
-converted_biom <- readData(filepath = "metadata/final_otu_table_clean.biom", type = "BIOM")
+converted_biom <- readData(filepath = "output/final_otu_table_clean.biom", type = "BIOM")
 saveRDS(converted_biom, "results/kraken2.rds")
 
 #runMicrobiomeExplorer()
+
+# --------------------------------------------------------------------------------------------------------
+
+# [04] Power Calculation (16s)
+
+#power.cores = detectCores()
+#power.depth = 1000
+#power.matrix <- as(otu_table(data.biom), "matrix")
+
+#jaccard <- calcWJstudy(power.matrix)
+#m <- mean(jaccard)
+#s <- sd(jaccard)
+
+#weight_hm <- hashMean(rare_levels = runif(100, 0, 1), rep_per_level = 10, otu_number = power.depth, sequence_depth = power.depth)
+#means <- mclapply(weight_hm, function(x) (mean(lowerTriDM(calcWJstudy(x)))), mc.cores = power.cores)
+#names(means) <- sapply(strsplit(names(means), "_"), FUN = function(x) {x[[1]]})
+#mean_df <- data.frame(subsampling = as.numeric(names(means)), means = as.numeric(means), target = abs(as.numeric(means) - m))
+#subsample <- mean_df[which(mean_df$target == min(mean_df$target)), ]$subsampling
+#png("results/power_mean_subsample.png", width = 16, height = 16, units = "cm", res = 500)
+#qplot(data = mean_df, x = subsampling, y = means)
+#dev.off()
+
+#weight_hsd <- hashSD(rare_depth = subsample, otu_number_range = 10^runif(n = 100, min = 1, max = 5), sim_number = 30, sequence_depth = power.depth)
+#sds <- mclapply(weight_hsd, function(x) (sd(lowerTriDM(calcWJstudy(x)))), mc.cores = power.cores)
+#names(sds) <- sapply(names(sds), function(x) substring(x, 4))
+#sds_df <- data.frame(otunum = as.numeric(names(sds)), sd = as.numeric(sds), target = abs(as.numeric(sds) - s))
+#otunum <- sds_df[which(sds_df$target == min(sds_df$target)), ]$otunum
+#png("results/power_sd_subsample.png", width = 16, height = 16, units = "cm", res = 500)
+#qplot(data = sds_df, x = otunum, y = sd) + geom_smooth(method = "lm") + scale_x_log10() + scale_y_log10() + xlab("log10(otunum)") + ylab("log10(sd)")
+#dev.off()
+
+#sp <- simPower(group_size_vector = c(10, 10), otu_number = otunum, rare_depth = subsample, sequence_depth = power.depth, effect_range = seq(0, 0.3, length.out = 100))
+#wj <- mclapply(sp, function(x) calcWJstudy(x), mc.cores = power.cores)
+#mean(as.numeric(mclapply(wj, mean, mc.cores = power.cores)))
+#mean(as.numeric(mclapply(wj, sd, mc.cores = power.cores)))
+
+#bp30 <- bootPower(wj, boot_number = 10, subject_group_vector = c(10, 10), alpha = 0.05)
+#bp30_model <- subset(bp30, power < 0.95 & power > 0.2)
+#bp30_model <- data.frame(log_omega2 = log10(bp30_model$simulated_omega2), log_power = log10(bp30_model$power))
+#bp30_model <- subset(bp30_model, log_omega2 > -Inf)
+#bp30_lm <- lm(log_omega2 ~ log_power, data = bp30_model)
+#power80 <- 10^predict(bp30_lm, newdata = data.frame(log_power = log10(0.8)))
+#power90 <- 10^predict(bp30_lm, newdata = data.frame(log_power = log10(0.9)))
+#png("results/power_linear_model.png", width = 16, height = 16, units = "cm", res = 500)
+#ggplot2::qplot(data = bp30_model, x = log_power, y = log_omega2) +
+#  geom_smooth(method = "lm") +
+#  ggtitle("log10(Omega2) to log10(Power) with 10 Subjects/Group") +
+#  xlab("log10(Power)") +
+#  ylab("log10(Omega2)")
+#dev.off()
