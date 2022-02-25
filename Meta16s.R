@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Tue, 22.02.2022
-# Version: 0.2.5
+# Last Modified: Fri, 25.02.2022
+# Version: 0.2.6
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -299,6 +299,7 @@ ggplot(data.alpha.rarefy, aes(x = TIMEPOINT, y = diversity_shannon, fill = TIMEP
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.comparisions,
+                     alternative = "two.sided",
                      method = "wilcox.test",
                      label.y = c(6.9, 7.1, 7.3),
                      size = 3,
@@ -314,6 +315,7 @@ ggplot(data.alpha.rarefy, aes(x = TIMEPOINT, y = evenness_simpson, fill = TIMEPO
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.comparisions,
+                     alternative = "two.sided",
                      method = "wilcox.test",
                      label.y = c(0.22, 0.24, 0.26),
                      size = 3,
@@ -325,25 +327,25 @@ dev.off()
 # Significant Differences between SSG and Control (t0) -> yes
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t0" & data.alpha.rarefy$AB_GROUP != "5DG",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
-stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, p.adjust.method = "BH")
+stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
 # Significant Differences between SSG and Control (t1) -> yes
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t1" & data.alpha.rarefy$AB_GROUP != "5DG",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
-stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, p.adjust.method = "BH")
+stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
 # Significant Differences between 5DG and Control (t0) -> no
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t0" & data.alpha.rarefy$AB_GROUP != "SSG",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
-stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, p.adjust.method = "BH")
+stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
 # Significant Differences between 5DG and Control (t1) -> yes
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t1" & data.alpha.rarefy$AB_GROUP != "SSG",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
-stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, p.adjust.method = "BH")
+stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
 # Barplots
@@ -556,6 +558,7 @@ ggplot(G1, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.comparisions,
+                     alternative = "two.sided",
                      method = "wilcox.test",
                      label.y = c(12.5, 13.5, 14.5),
                      size = 3,
@@ -575,6 +578,7 @@ ggplot(G2, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.comparisions,
+                     alternative = "two.sided",
                      method = "wilcox.test",
                      label.y = c(12.5, 13.5, 14.5),
                      size = 3,
