@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Mon, 07.03.2022
-# Version: 0.2.7
+# Last Modified: Thu, 17.03.2022
+# Version: 0.2.8
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -780,19 +780,28 @@ samples.control.t0 <- meta.sorted[meta.sorted$AB_Group == "CONTROL" & meta.sorte
 samples.control.t1 <- meta.sorted[meta.sorted$AB_Group == "CONTROL" & meta.sorted$Timepoint == "t1", ]$SampleID
 samples.control.t2 <- meta.sorted[meta.sorted$AB_Group == "CONTROL" & meta.sorted$Timepoint == "t2", ]$SampleID
 
-samples.taxa <- c("g__Escherichia/Shigella",
+samples.taxa <- c("c__Subdivision5",
+                  "g__Allisonella",
+                  "g__Escherichia/Shigella",
+                  "g__Fusobacterium",
+                  "g__Lactobacillus",
+                  "g__Phascolarctobacterium",
+                  "g__Rhodococcus",
+                  "g__Roseburia",
+                  "g__Ruminococcus",
                   "g__Salmonella",
                   "g__Staphylococcus",
                   "g__Streptococcus",
-                  "g__Lactobacillus",
-                  "f__Veillonellaceae",
-                  "g__Allisonella",
-                  "g__Phascolarctobacterium",
-                  "g__Roseburia",
-                  "g__Ruminococcus",
-                  "g__Fusobacterium",
-                  "g__Rhodococcus"
+                  "f__Acidaminococcaceae",
+                  "f__Bacteroidaceae",
+                  "f__Enterobacteriaceae",
+                  "f__Lachnospiraceae",
+                  "f__Moraxellaceae",
+                  "f__Planococcaceae",
+                  "f__Ruminococcaceae",
+                  "f__Veillonellaceae"
                   )
+
 c1 = c()
 c2 = c()
 c3 = c()
@@ -805,7 +814,13 @@ c9 = c()
 x = 1
 
 for (t in samples.taxa){
-  t1 <- data.otu.rarefy[data.otu.rarefy$Rank5 == t | data.otu.rarefy$Rank6 == t, ]
+  t1 <- data.otu.rarefy[data.otu.rarefy$Rank1 == t |
+                        data.otu.rarefy$Rank2 == t |
+                        data.otu.rarefy$Rank3 == t |
+                        data.otu.rarefy$Rank4 == t |
+                        data.otu.rarefy$Rank5 == t |
+                        data.otu.rarefy$Rank6 == t |
+                        data.otu.rarefy$Rank7 == t, ]
   
   t2 <- t1[samples.ssg.t0]
   t3 <- colSums(t2)
@@ -880,3 +895,24 @@ taxa.abundancies <- data.frame(TAXA = samples.taxa,
                                )
 
 write.csv(taxa.abundancies, file = "results/tab_otu_species_mean.csv", quote = FALSE, row.names = FALSE)
+
+# --------------------------------------------------------------------------------------------------------
+
+# [06] Assessing differences in beta diversities
+
+beta.horses <- unique(meta.sorted$HorseID)
+beta.intra <- c()
+beta.inter <- c()
+
+for (h in beta.horses){
+  t <- meta.sorted[meta.sorted$HorseID == h, ]$SampleID
+  r <- data.bray[t[1], ]
+  # We select t0 as a starting point and query its ID to receive t1 and t2 distances
+  beta.intra <- c(beta.intra, r[(names(r) %in% t)])
+  # Afterwards, we assess the distances of this t0 sample to all other samples
+  beta.inter <- c(beta.inter, r[!(names(r) %in% t)])
+}
+
+beta.intra <- beta.intra[!(beta.intra %in% c(0))]
+beta.df <- data.frame(GROUP = c(rep("Intra", length(beta.intra)), rep("Inter", length(beta.inter))), VAL = c(beta.intra, beta.inter))
+beta.res <- pairwise.wilcox.test(beta.df$VAL, beta.df$GROUP, paired = FALSE, alternative = "less", p.adjust.method = "BH")
