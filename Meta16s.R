@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Mon, 29.03.2022
-# Version: 0.2.9
+# Last Modified: Thu, 07.04.2022
+# Version: 0.3.0
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -359,6 +359,71 @@ ggplot(data.alpha.rarefy, aes(x = AB_GROUP, y = evenness_simpson, fill = AB_GROU
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.groups) +
   stat_compare_means(comparisons = boxplot.groups,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(0.22, 0.24, 0.26),
+                     size = 3,
+                     paired = FALSE)
+dev.off()
+
+# Boxplots (Control Separately)
+png("results/div_box_cs_shan_sep_control.png", width = 10, height = 10, units = "cm", res = 500)
+ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT != "t2",], aes(x = TIMEPOINT, y = diversity_shannon, fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  facet_wrap(~AB_GROUP, scale = "free") +
+  coord_cartesian(ylim = c(4.5, 7.4)) +
+  scale_y_continuous(breaks = c(5, 6, 7)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups[3]) +
+  stat_compare_means(comparisons = boxplot.timepoints[1],
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(6.9, 7.1, 7.3),
+                     size = 3,
+                     paired = TRUE)
+dev.off()
+
+png("results/div_box_cs_even_sep_control.png", width = 10, height = 10, units = "cm", res = 500)
+ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT != "t2",], aes(x = TIMEPOINT, y = evenness_simpson, fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  facet_wrap(~AB_GROUP, scale = "free") +
+  coord_cartesian(ylim = c(0.02, 0.27)) +
+  scale_y_continuous(breaks = c(0.05, 0.15, 0.25)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups[3]) +
+  stat_compare_means(comparisons = boxplot.timepoints[1],
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(0.22, 0.24, 0.26),
+                     size = 3,
+                     paired = TRUE)
+dev.off()
+
+png("results/div_box_cs_shan_group.png", width = 20, height = 10, units = "cm", res = 500)
+ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = diversity_shannon, fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  facet_wrap(~TIMEPOINT, scale = "free") +
+  coord_cartesian(ylim = c(4.5, 7.4)) +
+  scale_y_continuous(breaks = c(5, 6, 7)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups[1:2]) +
+  stat_compare_means(comparisons = boxplot.groups[1],
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(6.9, 7.1, 7.3),
+                     size = 3,
+                     paired = FALSE)
+dev.off()
+
+png("results/div_box_cs_even_group.png", width = 20, height = 10, units = "cm", res = 500)
+ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = evenness_simpson, fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  facet_wrap(~TIMEPOINT, scale = "free") +
+  coord_cartesian(ylim = c(0.02, 0.27)) +
+  scale_y_continuous(breaks = c(0.05, 0.15, 0.25)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups[1:2]) +
+  stat_compare_means(comparisons = boxplot.groups[1],
                      alternative = "two.sided",
                      method = "wilcox.test",
                      label.y = c(0.22, 0.24, 0.26),
