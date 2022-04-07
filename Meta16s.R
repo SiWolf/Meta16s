@@ -1,15 +1,15 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s.R
 # Author: Silver A. Wolf
-# Last Modified: Thu, 17.03.2022
-# Version: 0.2.8
+# Last Modified: Mon, 29.03.2022
+# Version: 0.2.9
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
 
-library("dplyr")
 library("circlize")
 library("ComplexHeatmap")
+library("dplyr")
 library("ggplot2")
 library("ggpubr")
 library("kableExtra")
@@ -916,3 +916,134 @@ for (h in beta.horses){
 beta.intra <- beta.intra[!(beta.intra %in% c(0))]
 beta.df <- data.frame(GROUP = c(rep("Intra", length(beta.intra)), rep("Inter", length(beta.inter))), VAL = c(beta.intra, beta.inter))
 beta.res <- pairwise.wilcox.test(beta.df$VAL, beta.df$GROUP, paired = FALSE, alternative = "less", p.adjust.method = "BH")
+
+# --------------------------------------------------------------------------------------------------------
+
+# [07] Calculating log2FC on family level
+
+df_ssg_t0 <- NULL
+df_ssg_t1 <- NULL
+df_ssg_t2 <- NULL
+
+df_5dg_t0 <- NULL
+df_5dg_t1 <- NULL
+df_5dg_t2 <- NULL
+
+taxa_list <- unique(data.otu.rarefy$Rank5)
+
+for (t in taxa_list){
+  t1 <- data.otu.rarefy[data.otu.rarefy$Rank1 == t |
+                        data.otu.rarefy$Rank2 == t |
+                        data.otu.rarefy$Rank3 == t |
+                        data.otu.rarefy$Rank4 == t |
+                        data.otu.rarefy$Rank5 == t |
+                        data.otu.rarefy$Rank6 == t |
+                        data.otu.rarefy$Rank7 == t, ]
+  
+  # Control
+  c1 <- t1[samples.control.t0]
+  c2 <- colSums(c1)
+  c3 <- median(c2)
+  
+  if (c3 > 0){
+    # SSG
+    s1 <- t1[samples.ssg.t0]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_ssg_t0, s5) -> df_ssg_t0
+    
+    s1 <- t1[samples.ssg.t1]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_ssg_t1, s5) -> df_ssg_t1
+    
+    s1 <- t1[samples.ssg.t2]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_ssg_t2, s5) -> df_ssg_t2
+    
+    # 5DG
+    s1 <- t1[samples.5dg.t0]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_5dg_t0, s5) -> df_5dg_t0
+    
+    s1 <- t1[samples.5dg.t1]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_5dg_t1, s5) -> df_5dg_t1
+    
+    s1 <- t1[samples.5dg.t2]
+    s2 <- colSums(s1)
+    s3 <- (s2 - c3)/c3
+    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
+    s5 <- c(t, s4)
+    rbind(df_5dg_t2, s5) -> df_5dg_t2
+  }
+}
+
+df_ssg_t0[df_ssg_t0 == "NaN"] <- "0"
+df_ssg_t1[df_ssg_t1 == "NaN"] <- "0"
+df_ssg_t2[df_ssg_t2 == "NaN"] <- "0"
+
+df_5dg_t0[df_5dg_t0 == "NaN"] <- "0"
+df_5dg_t1[df_5dg_t1 == "NaN"] <- "0"
+df_5dg_t2[df_5dg_t2 == "NaN"] <- "0"
+
+df_ssg_t0 <- as.data.frame(df_ssg_t0)
+df_ssg_t1 <- as.data.frame(df_ssg_t1)
+df_ssg_t2 <- as.data.frame(df_ssg_t2)
+
+df_5dg_t0 <- as.data.frame(df_5dg_t0)
+df_5dg_t1 <- as.data.frame(df_5dg_t1)
+df_5dg_t2 <- as.data.frame(df_5dg_t2)
+
+new.names.old = meta.sorted[match(colnames(df_ssg_t0)[c(-1)], meta.sorted$SampleID),]
+colnames(df_ssg_t0) <- c("Family", new.names.old$HorseID)
+df_ssg_t0 <- df_ssg_t0[,order(colnames(df_ssg_t0))]
+df_ssg_t0 <- df_ssg_t0[order(df_ssg_t0$Family),]
+
+new.names.old = meta.sorted[match(colnames(df_ssg_t1)[c(-1)], meta.sorted$SampleID),]
+colnames(df_ssg_t1) <- c("Family", new.names.old$HorseID)
+df_ssg_t1 <- df_ssg_t1[,order(colnames(df_ssg_t1))]
+df_ssg_t1 <- df_ssg_t1[order(df_ssg_t1$Family),]
+
+new.names.old = meta.sorted[match(colnames(df_ssg_t2)[c(-1)], meta.sorted$SampleID),]
+colnames(df_ssg_t2) <- c("Family", new.names.old$HorseID)
+df_ssg_t2 <- df_ssg_t2[,order(colnames(df_ssg_t2))]
+df_ssg_t2 <- df_ssg_t2[order(df_ssg_t2$Family),]
+
+new.names.old = meta.sorted[match(colnames(df_5dg_t0)[c(-1)], meta.sorted$SampleID),]
+colnames(df_5dg_t0) <- c("Family", new.names.old$HorseID)
+df_5dg_t0 <- df_5dg_t0[,order(colnames(df_5dg_t0))]
+df_5dg_t0 <- df_5dg_t0[order(df_5dg_t0$Family),]
+
+new.names.old = meta.sorted[match(colnames(df_5dg_t1)[c(-1)], meta.sorted$SampleID),]
+colnames(df_5dg_t1) <- c("Family", new.names.old$HorseID)
+df_5dg_t1 <- df_5dg_t1[,order(colnames(df_5dg_t1))]
+df_5dg_t1 <- df_5dg_t1[order(df_5dg_t1$Family),]
+
+new.names.old = meta.sorted[match(colnames(df_5dg_t2)[c(-1)], meta.sorted$SampleID),]
+colnames(df_5dg_t2) <- c("Family", new.names.old$HorseID)
+df_5dg_t2 <- df_5dg_t2[,order(colnames(df_5dg_t2))]
+df_5dg_t2 <- df_5dg_t2[order(df_5dg_t2$Family),]
+
+list_of_datasets <- list("SSG_t0" = df_ssg_t0,
+                         "SSG_t1" = df_ssg_t1,
+                         "SSG_t2" = df_ssg_t2,
+                         "5DG_t0" = df_5dg_t0,
+                         "5DG_t1" = df_5dg_t1,
+                         "5DG_t2" = df_5dg_t2
+                         )
+
+write.xlsx(list_of_datasets, file = "results/tab_otu_family_fc.xlsx")
