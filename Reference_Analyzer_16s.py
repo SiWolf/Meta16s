@@ -1,10 +1,11 @@
 # -----------------------------------------
 # Title: Reference_Analyzer_16s.py
 # Author: Silver A. Wolf
-# Last Modified: Wed, 16.02.2022
-# Version: 0.1.4
+# Last Modified: Fri, 10.06.2022
+# Version: 0.1.5
 # -----------------------------------------
 
+import csv
 import glob
 import os
 import numpy as np
@@ -218,6 +219,9 @@ def create_biom_table():
 
 	tab.close()
 
+	# Update phyla labels according to newest taxonomy
+	update_phyla()
+
 	# Export tsv to BIOM format for downstream analysis
 	os.system("biom convert " +
 			  "-i output/final_otu_table.tsv " +
@@ -232,13 +236,27 @@ def create_biom_table():
 			  "-o output/final_otu_table_clean.biom " +
 			  "-n 4"
 			 )
-
+	
 	os.system("biom convert " +
 			  "-i output/final_otu_table_clean.biom " +
 			  "-o output/final_otu_table_clean.tsv " +
 			  "--to-tsv " +
 			  "--header-key taxonomy"
 			 )
+
+def update_phyla():
+	dict_tax = {}
+	
+	with open("databases/42_Bacterial_Phyla_2022.csv", mode = "r") as tax:
+		full_tax = csv.reader(tax)
+		dict_tax = {rows[0]:rows[1] for rows in full_tax}
+	
+	del dict_tax["Old"]
+	
+	for key in dict_tax:
+		old_name = "p__" + key
+		new_name = "p__" + dict_tax[key]
+		os.system("sed -i -- \'s/" + old_name + "/" + new_name + "/g\' output/final_otu_table.tsv")
 
 def helperfunction(list_reads):
 	for read in list_reads:
