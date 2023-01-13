@@ -61,18 +61,18 @@ def analyze_samples(read1):
 			  "-notmatched " + output_dir + "/otus_notmatched.fa"
 			 )
 
-	os.system("./usearch11.0.667_i86linux32 " +
-			  "-sortbysize " + output_dir + "/otus_with_sizes.fa " +
-			  "-fastaout " + output_dir + "/otus_sorted.fa " +
-			  "-minsize 0"
-			 )
+	#os.system("./usearch11.0.667_i86linux32 " +
+	#		  "-sortbysize " + output_dir + "/otus_with_sizes.fa " +
+	#		  "-fastaout " + output_dir + "/otus_sorted.fa " +
+	#		  "-minsize 0"
+	#		 )
 
-	os.system("./usearch11.0.667_i86linux32 " +
-			  "-unoise3 " + output_dir + "/otus_sorted.fa " +
-			  "-tabbedout " + output_dir + "/zotus.tsv " +
-			  "-zotus " + output_dir + "/zotus.fa " +
-			  "-minsize 0"
-			 )
+	#os.system("./usearch11.0.667_i86linux32 " +
+	#		  "-unoise3 " + output_dir + "/otus_sorted.fa " +
+	#		  "-tabbedout " + output_dir + "/zotus.tsv " +
+	#		  "-zotus " + output_dir + "/zotus.fa " +
+	#		  "-minsize 0"
+	#		 )
 
 	#os.system("SequenceMatch " +
 	#		  "train databases/current_Bacteria_unaligned.fa databases/rdp/rdp"
@@ -95,12 +95,12 @@ def analyze_samples(read1):
 			  "-threads 4"
 			 )
 	
-	os.system("./usearch11.0.667_i86linux32 " +
-			  "-unoise3 " + output_dir + "/otus_notmatched_derep.fa " +
-			  "-tabbedout " + output_dir + "/zotus_notmatched.tsv " +
-			  "-zotus " + output_dir + "/zotus_notmatched.fa " +
-			  "-minsize 0"
-			 )
+	#os.system("./usearch11.0.667_i86linux32 " +
+	#		  "-unoise3 " + output_dir + "/otus_notmatched_derep.fa " +
+	#		  "-tabbedout " + output_dir + "/zotus_notmatched.tsv " +
+	#		  "-zotus " + output_dir + "/zotus_notmatched.fa " +
+	#		  "-minsize 0"
+	#		 )
 	
 	os.system("SequenceMatch " +
 			  "seqmatch databases/rdp/ " + output_dir + "/zotus_notmatched.fa " +
