@@ -1,8 +1,8 @@
 # -----------------------------------------
 # Title: Reference_Analyzer_16s.py
 # Author: Silver A. Wolf
-# Last Modified: Fri, 10.06.2022
-# Version: 0.1.5
+# Last Modified: Tue, 24.01.2023
+# Version: 0.1.6
 # -----------------------------------------
 
 import csv
@@ -11,6 +11,7 @@ import os
 import numpy as np
 import multiprocessing
 from multiprocessing import Pool
+from pyfasta import Fasta
 
 def analyze_samples(read1):
 	read2 = read1.split("_R1.fastq.gz")[0] + "_R2.fastq.gz"
@@ -60,26 +61,15 @@ def analyze_samples(read1):
 			  "-dbmatched " + output_dir + "/otus_with_sizes.fa " +
 			  "-notmatched " + output_dir + "/otus_notmatched.fa"
 			 )
-
-	#os.system("./usearch11.0.667_i86linux32 " +
-	#		  "-sortbysize " + output_dir + "/otus_with_sizes.fa " +
-	#		  "-fastaout " + output_dir + "/otus_sorted.fa " +
-	#		  "-minsize 0"
-	#		 )
-
-	#os.system("./usearch11.0.667_i86linux32 " +
-	#		  "-unoise3 " + output_dir + "/otus_sorted.fa " +
-	#		  "-tabbedout " + output_dir + "/zotus.tsv " +
-	#		  "-zotus " + output_dir + "/zotus.fa " +
-	#		  "-minsize 0"
-	#		 )
+	
+	extract_sequences(output_dir + "/otus_map.txt", output_dir + "/otus_with_sizes.fa", output_dir + "/otus.fa")
 
 	#os.system("SequenceMatch " +
 	#		  "train databases/current_Bacteria_unaligned.fa databases/rdp/rdp"
 	#		 )
 
 	os.system("SequenceMatch " +
-			  "seqmatch databases/rdp/ " + output_dir + "/zotus.fa " +
+			  "seqmatch databases/rdp/ " + output_dir + "/otus.fa " +
 			  "-k 1 " +
 			  "-s 0.5 " +
 			  "> " + output_dir + "/seq_results.txt"
@@ -94,16 +84,9 @@ def analyze_samples(read1):
 			  "-strand both " +
 			  "-threads 4"
 			 )
-	
-	#os.system("./usearch11.0.667_i86linux32 " +
-	#		  "-unoise3 " + output_dir + "/otus_notmatched_derep.fa " +
-	#		  "-tabbedout " + output_dir + "/zotus_notmatched.tsv " +
-	#		  "-zotus " + output_dir + "/zotus_notmatched.fa " +
-	#		  "-minsize 0"
-	#		 )
-	
+
 	os.system("SequenceMatch " +
-			  "seqmatch databases/rdp/ " + output_dir + "/zotus_notmatched.fa " +
+			  "seqmatch databases/rdp/ " + output_dir + "/otus_notmatched_derep.fa " +
 			  "-k 1 " +
 			  "-s 0.5 " +
 			  "> " + output_dir + "/seq_results_notmatched.txt"
@@ -151,17 +134,12 @@ def create_biom_table():
 					split = line.split("\t")
 					# If id in file -> retrieve abundance from tsv
 					if split[1] == t:
-						c = 0
-						number = int(split[0].split("Zotu")[1])
-						zotu_results = "output/" + d + "/zotus.tsv"
+						zotu_results = "output/" + d + "/otus_map.txt"
 						with open(zotu_results, "r") as outfile:
 							for l in outfile:
-								s = l.split("\t")
-								if "zotu" in s[2]:
-									c = c + 1
-									if number == c:
-										abundance = abundance + int(s[0].split("size=")[1].split(";")[0])
-										break
+								s = l.split("\t")[-1]
+								if split[0] == s:
+									abundance = abundance + 1
 			
 			# Scan through seq_results_unmapped
 			rdp_results_unmapped = "output/" + d + "/seq_results_notmatched.txt"
@@ -170,16 +148,14 @@ def create_biom_table():
 					split = line.split("\t")
 					# If id in file -> retrieve abundance from tsv
 					if split[1] == t:
-						c = 0
-						number = int(split[0].split("Zotu")[1])
-						zotu_results = "output/" + d + "/zotus_notmatched.tsv"
+						zotu_results = "output/" + d + "/otus_notmatched_derep.fa"
 						with open(zotu_results, "r") as outfile:
 							for l in outfile:
-								s = l.split("\t")
-								if "zotu" in s[2]:
-									c = c + 1
-									if number == c:
-										abundance = abundance + int(s[0].split("size=")[1].split(";")[0])
+								if l[0] == ">":
+									s = l.split(">")[1].split(";")[0]
+									if split[0] == s:
+										m = l.split("size=")[1].split(";")[0]
+										abundance = abundance + m
 										break
 			
 			final_line = final_line + "\t" + str(abundance)
@@ -244,6 +220,40 @@ def create_biom_table():
 			  "--header-key taxonomy"
 			 )
 
+def extract_sequences(otu_mapping, otu_clusters, otu_fasta):
+	otu_list = []
+	with open(otu_mapping, "r") as infile:
+		for line in infile:
+			otu = line.split("\t")[-1]
+			if otu not in otu_list:
+				otu_list.append(otu.strip())
+	fasta = Fasta(otu_clusters)
+	otu_dict = {}
+	for seq in fasta:
+		seq_fixed = seq.split(";")[0]
+		otu_dict[seq_fixed] = fasta[seq]
+	fasta_out = open(otu_fasta, "w")
+	for otu in otu_list:
+		fasta_out.write(">" + otu + "\n")
+		fasta_out.write(fasta_wrapper(str(otu_dict[otu])) + "\n")
+	fasta_out.close()
+
+def fasta_wrapper(sequence):
+	sequence = sequence.strip()
+	sequence_count = 0
+	sequence_length = len(sequence)
+	new_sequence = ""
+	new_sequence_count = 0
+	for base in sequence:
+		sequence_count += 1
+		if (new_sequence_count == 79) and (sequence_length - sequence_count > 0):
+			new_sequence = new_sequence + base + "\n"
+			new_sequence_count = 0
+		else:
+			new_sequence = new_sequence + base
+			new_sequence_count += 1
+	return(new_sequence)
+
 def update_phyla():
 	dict_tax = {}
 	
@@ -265,11 +275,11 @@ def helperfunction(list_reads):
 # Main
 def main():
 	seqs = glob.glob("sequences/*_R1.fastq.gz")
-	
+
 	# Parallelize Script
-	amount_threads = 54
-	list_reads = np.array_split(seqs, amount_threads)
-	pool = Pool(amount_threads)
+	amount_cores = 1
+	list_reads = np.array_split(seqs, amount_cores)
+	pool = Pool(amount_cores)
 	results = pool.map(helperfunction, list_reads)
 	
 	create_biom_table()

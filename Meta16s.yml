@@ -14,7 +14,7 @@ dependencies:
   - biom-format=2.1.7=py27_0
   - burrito=0.9.1=py27_0
   - burrito-fillings=0.1.1=py27_1
-  - ca-certificates=2021.5.30=ha878542_0
+  - ca-certificates=2022.12.7=ha878542_0
   - certifi=2019.11.28=py27h8c360ce_1
   - click=7.1.2=pyh9f0ad1d_0
   - cogent=1.5.3=py27h1341992_2
@@ -131,4 +131,5 @@ dependencies:
   - xz=5.2.5=h516909a_1
   - zlib=1.2.11=h516909a_1010
   - pip:
-    - multiprocessing==2.6.2.1
+      - multiprocessing==2.6.2.1
+      - pyfasta==0.5.2
