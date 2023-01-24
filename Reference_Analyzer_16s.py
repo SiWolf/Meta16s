@@ -277,7 +277,7 @@ def main():
 	seqs = glob.glob("sequences/*_R1.fastq.gz")
 
 	# Parallelize Script
-	amount_cores = 1
+	amount_cores = 54
 	list_reads = np.array_split(seqs, amount_cores)
 	pool = Pool(amount_cores)
 	results = pool.map(helperfunction, list_reads)
