@@ -137,8 +137,8 @@ def create_biom_table():
 						zotu_results = "output/" + d + "/otus_map.txt"
 						with open(zotu_results, "r") as outfile:
 							for l in outfile:
-								s = l.split("\t")[-1]
-								if split[0] == s:
+								s = l.split("\t")[-1].strip()
+								if split[0].strip() == s:
 									abundance = abundance + 1
 			
 			# Scan through seq_results_unmapped
@@ -152,10 +152,10 @@ def create_biom_table():
 						with open(zotu_results, "r") as outfile:
 							for l in outfile:
 								if l[0] == ">":
-									s = l.split(">")[1].split(";")[0]
-									if split[0] == s:
-										m = l.split("size=")[1].split(";")[0]
-										abundance = abundance + m
+									s = l.split(">")[1].split(";")[0].strip()
+									if split[0].strip() == s:
+										m = l.split("size=")[1].split(";")[0].strip()
+										abundance = abundance + int(m)
 										break
 			
 			final_line = final_line + "\t" + str(abundance)
@@ -277,7 +277,7 @@ def main():
 	seqs = glob.glob("sequences/*_R1.fastq.gz")
 
 	# Parallelize Script
-	amount_cores = 2
+	amount_cores = 54
 	list_reads = np.array_split(seqs, amount_cores)
 	pool = Pool(amount_cores)
 	results = pool.map(helperfunction, list_reads)
