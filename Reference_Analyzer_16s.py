@@ -1,8 +1,8 @@
 # -----------------------------------------
 # Title: Reference_Analyzer_16s.py
 # Author: Silver A. Wolf
-# Last Modified: Tue, 24.01.2023
-# Version: 0.1.6
+# Last Modified: Wed, 25.01.2023
+# Version: 0.1.7
 # -----------------------------------------
 
 import csv
@@ -61,7 +61,7 @@ def analyze_samples(read1):
 			  "-dbmatched " + output_dir + "/otus_with_sizes.fa " +
 			  "-notmatched " + output_dir + "/otus_notmatched.fa"
 			 )
-	
+
 	extract_sequences(output_dir + "/otus_map.txt", output_dir + "/otus_with_sizes.fa", output_dir + "/otus.fa")
 
 	#os.system("SequenceMatch " +
@@ -224,9 +224,9 @@ def extract_sequences(otu_mapping, otu_clusters, otu_fasta):
 	otu_list = []
 	with open(otu_mapping, "r") as infile:
 		for line in infile:
-			otu = line.split("\t")[-1]
+			otu = line.split("\t")[-1].strip()
 			if otu not in otu_list:
-				otu_list.append(otu.strip())
+				otu_list.append(otu)
 	fasta = Fasta(otu_clusters)
 	otu_dict = {}
 	for seq in fasta:
@@ -277,7 +277,7 @@ def main():
 	seqs = glob.glob("sequences/*_R1.fastq.gz")
 
 	# Parallelize Script
-	amount_cores = 54
+	amount_cores = 2
 	list_reads = np.array_split(seqs, amount_cores)
 	pool = Pool(amount_cores)
 	results = pool.map(helperfunction, list_reads)
