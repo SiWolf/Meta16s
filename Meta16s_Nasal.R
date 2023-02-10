@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
-# Title: Meta16s.R
+# Title: Meta16s_Nasal.R
 # Author: Silver A. Wolf
-# Last Modified: Mon, 21.11.2022
-# Version: 0.3.8
+# Last Modified: Fri, 10.02.2023
+# Version: 0.0.1
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -35,11 +35,14 @@ library("vegan")
 data.biom <- import_biom("output/final_otu_table_clean.biom", parseFunction = parse_taxonomy_default)
 
 # Metadata
-meta <- read.xlsx("metadata/22_02_Horses_Overview.xlsx", sheet = 1)
-meta.filtered <- meta[meta$AB_Group != "SWITCHED" & !(meta$AB_Group == "CONTROL" & meta$Timepoint == "t2"), ]
+meta <- read.xlsx("metadata/22_02_Horses_Overview.xlsx", sheet = 3)
 
-# Group order
-groups.order <- c("SSG", "5DG", "CONTROL")
+# Define Groups
+groups.order <- c("SSG", "5DG")
+
+# Remove any samples that might not be of interest
+meta.filtered <- meta[meta$AB_Group %in% groups.order, ]
+data.biom <- prune_samples(sample_names(data.biom) %in% meta.filtered$SampleID, data.biom)
 
 # --------------------------------------------------------------------------------------------------------
 
@@ -55,9 +58,10 @@ sum(sample_depth)
 # Alpha Diversity (Raw)
 data.alpha <- microbiome::alpha(data.biom)
 
-#png("results/div_rarefaction_curve.png", width = 16, height = 16, units = "cm", res = 500)
-#rarecurve(as(t(otu_table(data.biom)), "matrix"), step = 50, cex = 0.5)
-#dev.off()
+# Rarefaction curve
+png("results/div_rarefaction_curve.png", width = 16, height = 16, units = "cm", res = 500)
+rarecurve(as(t(otu_table(data.biom)), "matrix"), step = 50, cex = 0.5)
+dev.off()
 
 # Alpha diversity (Rarefy)
 data.rarefy <- rarefy_even_depth(data.biom, rngseed = 1, sample.size = min(sample_depth), replace = FALSE, trimOTUs = FALSE)
@@ -122,13 +126,20 @@ nrow(data.otu)
 # Unique Genus Level Taxa
 length(unique(data.otu$Rank6))
 
-# Diversity values per group
+# Diversity values per group and timepoint
 max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 
+max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+
+max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
+min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
+median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "SSG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
 
 max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
@@ -136,15 +147,15 @@ min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TI
 median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
 
+max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
+
+max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
+min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
+median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
 mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "5DG" & data.alpha.rarefy$TIMEPOINT == "t2",]$diversity_shannon)
-
-max(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
-min(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
-median(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
-mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT == "t0",]$diversity_shannon)
-
-mean(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP == "CONTROL" & data.alpha.rarefy$TIMEPOINT == "t1",]$diversity_shannon)
 
 # PCA
 colours.days = c("t0" = "#00BA38",
@@ -153,8 +164,7 @@ colours.days = c("t0" = "#00BA38",
                  )
 
 colours.groups = c("SSG" = "#00ff7f",
-                   "5DG" = "#ffa500",
-                   "CONTROL" = "#00bfff"
+                   "5DG" = "#ffa500"
                    )
 
 eigenvalue_pc1 = round(braycurtis.pcoa$values$Relative_eig[1]*100, 1)
@@ -167,8 +177,8 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -208,14 +218,14 @@ chull.area <- chull.poly@area
 chull.area
 
 # Timepoints - SSG
-png("results/div_pca_time_ssg.png", width = 13, height = 13, units = "cm", res = 500)
+png("results/div_pca_time_group_ssg.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa[data.pcoa$AB_GROUP == "SSG", ],
           x = "Axis.1",
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -255,14 +265,14 @@ chull.area <- chull.poly@area
 chull.area
 
 # Timepoints - 5DG
-png("results/div_pca_time_5dg.png", width = 13, height = 13, units = "cm", res = 500)
+png("results/div_pca_time_group_5dg.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa[data.pcoa$AB_GROUP == "5DG", ],
           x = "Axis.1",
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
           #star.plot = TRUE,
@@ -301,45 +311,6 @@ chull.poly <- Polygon(chull.coords, hole = F)
 chull.area <- chull.poly@area
 chull.area
 
-# Timepoints - Control
-png("results/div_pca_time_control.png", width = 13, height = 13, units = "cm", res = 500)
-ggscatter(data.pcoa[data.pcoa$AB_GROUP == "CONTROL", ],
-          x = "Axis.1",
-          y = "Axis.2",
-          xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
-          ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
-          color = "TIMEPOINT",
-          shape = "TIMEPOINT",
-          #star.plot = TRUE,
-          #mean.point = TRUE,
-          ellipse = TRUE,
-          ellipse.alpha = 0.3,
-          ellipse.border.remove = TRUE,
-          ellipse.type = "convex",
-          palette = colours.days[1:2],
-          title = "CONTROL - PCA (Bray–Curtis Dissimilarity)"
-          ) +
-          theme(plot.title = element_text(hjust = 0.5))
-dev.off()
-
-chull.raw <- data.pcoa[data.pcoa$TIMEPOINT == "t0" & data.pcoa$AB_GROUP == "CONTROL", 1:2]
-chull.hpts <- chull(x = chull.raw$Axis.1, y = chull.raw$Axis.2)
-chull.hpts <- c(chull.hpts, chull.hpts[1])
-chull.coords <- chull.raw[chull.hpts,]
-chull.poly <- Polygon(chull.coords, hole = F)
-chull.area <- chull.poly@area
-chull.area
-
-chull.raw <- data.pcoa[data.pcoa$TIMEPOINT == "t1" & data.pcoa$AB_GROUP == "CONTROL", 1:2]
-chull.hpts <- chull(x = chull.raw$Axis.1, y = chull.raw$Axis.2)
-chull.hpts <- c(chull.hpts, chull.hpts[1])
-chull.coords <- chull.raw[chull.hpts,]
-chull.poly <- Polygon(chull.coords, hole = F)
-chull.area <- chull.poly@area
-chull.area
-
 # Groups - All Samples
 png("results/div_pca_group_all.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa,
@@ -347,8 +318,8 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -379,14 +350,6 @@ chull.poly <- Polygon(chull.coords, hole = F)
 chull.area <- chull.poly@area
 chull.area
 
-chull.raw <- data.pcoa[data.pcoa$AB_GROUP == "CONTROL", 1:2]
-chull.hpts <- chull(x = chull.raw$Axis.1, y = chull.raw$Axis.2)
-chull.hpts <- c(chull.hpts, chull.hpts[1])
-chull.coords <- chull.raw[chull.hpts,]
-chull.poly <- Polygon(chull.coords, hole = F)
-chull.area <- chull.poly@area
-chull.area
-
 # Groups - t0
 png("results/div_pca_group_t0.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t0", ],
@@ -394,8 +357,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t0", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -426,14 +389,6 @@ chull.poly <- Polygon(chull.coords, hole = F)
 chull.area <- chull.poly@area
 chull.area
 
-chull.raw <- data.pcoa[data.pcoa$TIMEPOINT == "t0" & data.pcoa$AB_GROUP == "CONTROL", 1:2]
-chull.hpts <- chull(x = chull.raw$Axis.1, y = chull.raw$Axis.2)
-chull.hpts <- c(chull.hpts, chull.hpts[1])
-chull.coords <- chull.raw[chull.hpts,]
-chull.poly <- Polygon(chull.coords, hole = F)
-chull.area <- chull.poly@area
-chull.area
-
 # Groups - t1
 png("results/div_pca_group_t1.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t1", ],
@@ -441,8 +396,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t1", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -473,14 +428,6 @@ chull.poly <- Polygon(chull.coords, hole = F)
 chull.area <- chull.poly@area
 chull.area
 
-chull.raw <- data.pcoa[data.pcoa$TIMEPOINT == "t1" & data.pcoa$AB_GROUP == "CONTROL", 1:2]
-chull.hpts <- chull(x = chull.raw$Axis.1, y = chull.raw$Axis.2)
-chull.hpts <- c(chull.hpts, chull.hpts[1])
-chull.coords <- chull.raw[chull.hpts,]
-chull.poly <- Polygon(chull.coords, hole = F)
-chull.area <- chull.poly@area
-chull.area
-
 # Groups - t2
 png("results/div_pca_group_t2.png", width = 13, height = 13, units = "cm", res = 500)
 ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t2", ],
@@ -488,8 +435,8 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t2", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.5, 0.25),
-          ylim = c(-0.25, 0.4),
+          xlim = c(-0.3, 0.4),
+          ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
           #star.plot = TRUE,
@@ -524,35 +471,35 @@ chull.area
 boxplot.groups <- list(c("SSG", "5DG"))
 
 png("results/div_box_group_shan.png", width = 20, height = 10, units = "cm", res = 500)
-ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = diversity_shannon, fill = AB_GROUP)) +
+ggplot(data.alpha.rarefy, aes(x = AB_GROUP, y = diversity_shannon, fill = AB_GROUP)) +
   geom_boxplot(alpha = 0.5) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~TIMEPOINT, scale = "free") +
-  coord_cartesian(ylim = c(4.6, 7.4)) +
-  scale_y_continuous(breaks = c(5, 6, 7)) +
+  coord_cartesian(ylim = c(1.1, 6.5)) +
+  scale_y_continuous(breaks = c(2, 4, 6)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.groups) +
   stat_compare_means(comparisons = boxplot.groups,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(6.9, 7.1, 7.3),
+                     label.y = c(6.1),
                      size = 3,
                      paired = FALSE)
 dev.off()
 
 png("results/div_box_group_even.png", width = 20, height = 10, units = "cm", res = 500)
-ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = evenness_simpson, fill = AB_GROUP)) +
+ggplot(data.alpha.rarefy, aes(x = AB_GROUP, y = evenness_simpson, fill = AB_GROUP)) +
   geom_boxplot(alpha = 0.5) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~TIMEPOINT, scale = "free") +
-  coord_cartesian(ylim = c(0.02, 0.27)) +
-  scale_y_continuous(breaks = c(0.05, 0.15, 0.25)) +
+  coord_cartesian(ylim = c(0.01, 0.7)) +
+  scale_y_continuous(breaks = c(0.2, 0.4, 0.6)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.groups) +
   stat_compare_means(comparisons = boxplot.groups,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(0.22, 0.24, 0.26),
+                     label.y = c(0.65),
                      size = 3,
                      paired = FALSE)
 dev.off()
@@ -561,136 +508,84 @@ dev.off()
 boxplot.timepoints <- list(c("t0", "t1"), c("t1", "t2"), c("t0","t2"))
 
 png("results/div_box_time_shan_group.png", width = 20, height = 10, units = "cm", res = 500)
-ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = TIMEPOINT, y = diversity_shannon, fill = TIMEPOINT)) +
+ggplot(data.alpha.rarefy, aes(x = TIMEPOINT, y = diversity_shannon, fill = TIMEPOINT)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(4.6, 7.4)) +
-  scale_y_continuous(breaks = c(5, 6, 7)) +
+  coord_cartesian(ylim = c(1.1, 6.6)) +
+  scale_y_continuous(breaks = c(2, 4, 6)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.timepoints,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(6.9, 7.1, 7.3),
+                     label.y = c(5.7, 6.0, 6.4),
                      size = 3,
                      paired = TRUE)
-dev.off()
-
-png("results/div_box_time_shan_control.png", width = 10, height = 10, units = "cm", res = 500)
-
-ggplot(data.alpha.rarefy[(data.alpha.rarefy$AB_GROUP == "CONTROL") & (data.alpha.rarefy$TIMEPOINT != "t2"),], aes(x = TIMEPOINT, y = diversity_shannon, fill = TIMEPOINT)) +
-  geom_boxplot(alpha = 0.9) +
-  geom_jitter(alpha = 0.5) +
-  facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(4.6, 7.4)) +
-  scale_y_continuous(breaks = c(5, 6, 7)) +
-  stat_boxplot(geom = "errorbar", width = 0.5) +
-  scale_fill_manual(values = colours.days) +
-  stat_compare_means(comparisons = boxplot.timepoints[1],
-                     alternative = "two.sided",
-                     method = "wilcox.test",
-                     label.y = c(6.9, 7.1, 7.3),
-                     size = 3,
-                     paired = TRUE)
-
-#fixed_control <- data.alpha.rarefy[(data.alpha.rarefy$AB_GROUP == "CONTROL") & (data.alpha.rarefy$TIMEPOINT != "t2"),]
-#names(fixed_control)[names(fixed_control) == "AB_GROUP"] <- "PAP"
-
-#ggplot(fixed_control, aes(x = TIMEPOINT, y = diversity_shannon, fill = PAP)) +
-#  geom_boxplot(alpha = 0.5) +
-#  geom_jitter(alpha = 0.5) +
-#  facet_wrap(~PAP, scale = "free") +
-#  coord_cartesian(ylim = c(4.6, 7.4)) +
-#  scale_y_continuous(breaks = c(5, 6, 7)) +
-#  stat_boxplot(geom = "errorbar", width = 0.5) +
-#  scale_fill_manual(values = colours.groups) +
-#  stat_compare_means(comparisons = boxplot.timepoints[1],
-#                    alternative = "two.sided",
-#                     method = "wilcox.test",
-#                     label.y = c(6.9, 7.1, 7.3),
-#                     size = 3,
-#                     paired = TRUE)
-
 dev.off()
 
 png("results/div_box_time_even_group.png", width = 20, height = 10, units = "cm", res = 500)
-ggplot(data.alpha.rarefy[data.alpha.rarefy$AB_GROUP != "CONTROL",], aes(x = TIMEPOINT, y = evenness_simpson, fill = TIMEPOINT)) +
+ggplot(data.alpha.rarefy, aes(x = TIMEPOINT, y = evenness_simpson, fill = TIMEPOINT)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0.02, 0.27)) +
-  scale_y_continuous(breaks = c(0.05, 0.15, 0.25)) +
+  coord_cartesian(ylim = c(0.01, 0.75)) +
+  scale_y_continuous(breaks = c(0.2, 0.4, 0.6)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.timepoints,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(0.22, 0.24, 0.26),
-                     size = 3,
-                     paired = TRUE)
-dev.off()
-
-png("results/div_box_time_even_control.png", width = 10, height = 10, units = "cm", res = 500)
-ggplot(data.alpha.rarefy[(data.alpha.rarefy$AB_GROUP == "CONTROL") & (data.alpha.rarefy$TIMEPOINT != "t2"),], aes(x = TIMEPOINT, y = evenness_simpson, fill = TIMEPOINT)) +
-  geom_boxplot(alpha = 0.9) +
-  geom_jitter(alpha = 0.5) +
-  facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0.02, 0.27)) +
-  scale_y_continuous(breaks = c(0.05, 0.15, 0.25)) +
-  stat_boxplot(geom = "errorbar", width = 0.5) +
-  scale_fill_manual(values = colours.days) +
-  stat_compare_means(comparisons = boxplot.timepoints[1],
-                     alternative = "two.sided",
-                     method = "wilcox.test",
-                     label.y = c(0.22, 0.24, 0.26),
+                     label.y = c(0.65, 0.68, 0.72),
                      size = 3,
                      paired = TRUE)
 dev.off()
 
 # Additional tests
 
-# Significant Differences between SSG (t0) and SSG (t1) -> yes
+# Significant differences between SSG (t0) and SSG (t1) -> no
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT != "t2" & data.alpha.rarefy$AB_GROUP == "SSG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE)
 stat.res
 
-# Significant Differences between 5DG (t0) and 5DG (t1) -> yes
+# Significant differences between 5DG (t0) and 5DG (t1) -> no
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT != "t2" & data.alpha.rarefy$AB_GROUP == "5DG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE)
 stat.res
 
-# Significant Differences between SSG (t0) and SSG (t2) -> yes
+# Significant differences between SSG (t0) and SSG (t2) -> no
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT != "t1" & data.alpha.rarefy$AB_GROUP == "SSG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE)
 stat.res
 
-# Significant Differences between 5DG (t0) and 5DG (t2) -> yes
+# Significant differences between 5DG (t0) and 5DG (t2) -> no
 stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT != "t1" & data.alpha.rarefy$AB_GROUP == "5DG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE)
 stat.res
 
-# Significant Differences between SSG and Control (t1) -> yes
-stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t1" & data.alpha.rarefy$AB_GROUP != "5DG",]
+# Significant differences between SSG and 5DG (t0) -> no
+stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t0",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
-# Significant Differences between 5DG and Control (t0) -> no
-stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t0" & data.alpha.rarefy$AB_GROUP != "SSG",]
+# Significant differences between 5DG and 5DG (t1) -> no
+stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t1",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
-# Significant Differences between 5DG and Control (t1) -> yes
-stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t1" & data.alpha.rarefy$AB_GROUP != "SSG",]
+# Significant differences between 5DG and 5DG (t2) -> no
+stat.data <- data.alpha.rarefy[data.alpha.rarefy$TIMEPOINT == "t2",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shannon)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
+
+# Ended Fixes here
 
 # Barplots
 bar_data_aggregated <- aggregate_top_taxa2(data.rarefy, 9, "Rank2")
@@ -735,6 +630,7 @@ bar_data_melted$OTU <- bar_data_melted$OTU
 
 # Individual Horses - 5DG
 bar_data_5dg <- bar_data_melted[bar_data_melted$AB_GROUP == "5DG",]
+bar_data_5dg[bar_data_5dg$OTU == "Other",]$OTU <- "Other Phyla"
 
 png("results/tax_bar_horses_5dg.png", width = 30, height = 15, units = "cm", res = 500)
 ggplot(bar_data_5dg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
@@ -754,6 +650,7 @@ dev.off()
 
 # Individual Horses - SSG
 bar_data_ssg <- bar_data_melted[bar_data_melted$AB_GROUP == "SSG",]
+bar_data_ssg[bar_data_ssg$OTU == "Other",]$OTU <- "Other Phyla"
 
 png("results/tax_bar_horses_ssg.png", width = 30, height = 15, units = "cm", res = 500)
 ggplot(bar_data_ssg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
