@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s_Nasal.R
 # Author: Silver A. Wolf
-# Last Modified: Fri, 10.02.2023
-# Version: 0.0.1
+# Last Modified: Mon, 27.02.2023
+# Version: 0.0.2
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -585,23 +585,20 @@ stat.df <- data.frame(GROUP = stat.data$AB_GROUP, AMR = stat.data$diversity_shan
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH")
 stat.res
 
-# Ended Fixes here
-
-# Barplots
+# Barplots (phyla)
 bar_data_aggregated <- aggregate_top_taxa2(data.rarefy, 9, "Rank2")
 bar_data_melted <- psmelt(bar_data_aggregated)
 num_taxa <- length(unique(bar_data_melted$OTU))
-palette <- distinctColorPalette(num_taxa)
 
-colours.phyla = c("Actinomycetota" = "#e2f6f3",
-                  "Armatimonadota" = "#48a0a1",
+colours.phyla = c("Acidobacteriota" = "#48a0a1",
+                  "Actinomycetota" = "#e2f6f3",
                   "Bacillota" = "#7d97ca",
                   "Bacteroidota" = "#414770",
-                  "Candidatus Saccharibacteria" = "#b4d6b4",
-                  "Other Phlya" = "#95f8d6",
+                  "Chloroflexota" = "#b4d6b4",
+                  "Cyanobacteria/Chloroplast" = "#f7edc0",
+                  "Fusobacteriota" = "#d4d7db",
+                  "Other Phyla" = "#95f8d6",
                   "Pseudomonadota" = "#a7ccf1",
-                  "Spirochaetota" = "#f7edc0",
-                  "Unclassified" = "#d4d7db",
                   "Verrucomicrobiota" = "#e4a080"
                   )
 
@@ -625,14 +622,12 @@ bar_data_melted$TIMEPOINT <- bar_ext_time
 # Rename OTUs accordingly
 bar_data_melted$OTU[bar_data_melted$OTU == "p__"] <- "Unclassified"
 bar_data_melted$OTU <- gsub("p__", "", bar_data_melted$OTU)
-#bar_data_melted$OTU <- gsub(" 1", "", bar_data_melted$OTU)
+bar_data_melted[bar_data_melted$OTU == "Other",]$OTU <- "Other Phyla"
 bar_data_melted$OTU <- bar_data_melted$OTU
 
 # Individual Horses - 5DG
 bar_data_5dg <- bar_data_melted[bar_data_melted$AB_GROUP == "5DG",]
-bar_data_5dg[bar_data_5dg$OTU == "Other",]$OTU <- "Other Phyla"
-
-png("results/tax_bar_horses_5dg.png", width = 30, height = 15, units = "cm", res = 500)
+png("results/tax_bar_phyla_horses_5dg.png", width = 30, height = 15, units = "cm", res = 500)
 ggplot(bar_data_5dg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(values = colours.phyla) +
@@ -650,9 +645,7 @@ dev.off()
 
 # Individual Horses - SSG
 bar_data_ssg <- bar_data_melted[bar_data_melted$AB_GROUP == "SSG",]
-bar_data_ssg[bar_data_ssg$OTU == "Other",]$OTU <- "Other Phyla"
-
-png("results/tax_bar_horses_ssg.png", width = 30, height = 15, units = "cm", res = 500)
+png("results/tax_bar_phyla_horses_ssg.png", width = 30, height = 15, units = "cm", res = 500)
 ggplot(bar_data_ssg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(values = colours.phyla) +
@@ -668,29 +661,9 @@ ggplot(bar_data_ssg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
         )
 dev.off()
 
-# Individual Horses - Control
-bar_data_control <- bar_data_melted[bar_data_melted$AB_GROUP == "CONTROL",]
-
-png("results/tax_bar_horses_control.png", width = 30, height = 15, units = "cm", res = 500)
-ggplot(bar_data_control, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
-  geom_bar(position = "fill", stat = "identity") +
-  scale_fill_manual(values = colours.phyla) +
-  labs(title = "Relative Abundance (Control)",
-       x = "Horses",
-       y = "Relative Abundance (%)",
-       fill = "Top 10 Phyla"
-       ) +
-  facet_grid(~ HORSE) +
-  theme(plot.title = element_text(hjust = 0.5),
-        panel.grid.major = element_blank(),
-        panel.grid.minor = element_blank()
-        )
-dev.off()
-
 # Summarized groups (5DG/SSG)
-
-png("results/tax_bar_sum_5dg_ssg.png", width = 15, height = 15, units = "cm", res = 500)
-ggplot(bar_data_melted[bar_data_melted$AB_GROUP != "CONTROL", ], aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
+png("results/tax_bar_phyla_sum_5dg_ssg.png", width = 15, height = 15, units = "cm", res = 500)
+ggplot(bar_data_melted, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
   geom_bar(position = "fill", stat = "identity") +
   scale_fill_manual(values = colours.phyla) +
   labs(title = "Mean Abundance (Groups)",
@@ -705,16 +678,80 @@ ggplot(bar_data_melted[bar_data_melted$AB_GROUP != "CONTROL", ], aes(fill = OTU,
         )
 dev.off()
 
-# Summarized groups (CONTROL)
+# Barplots (family)
+bar_data_aggregated <- aggregate_top_taxa2(data.rarefy, 9, "Rank5")
+bar_data_melted <- psmelt(bar_data_aggregated)
+num_taxa <- length(unique(bar_data_melted$OTU))
+colours.families <- distinctColorPalette(num_taxa)
 
-png("results/tax_bar_sum_control.png", width = 10, height = 15, units = "cm", res = 500)
-ggplot(bar_data_melted[bar_data_melted$AB_GROUP == "CONTROL", ], aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
+bar_ext_horse = c()
+bar_ext_group = c()
+bar_ext_time = c()
+i = 1
+
+for(e in bar_data_melted$Sample){
+  current_line = data.alpha.rarefy[rownames(data.alpha.rarefy) == e,]
+  bar_ext_horse[i] <- current_line$HORSE
+  bar_ext_group[i] <- as.character(current_line$AB_GROUP)
+  bar_ext_time[i] <- current_line$TIMEPOINT
+  i = i + 1
+}
+
+bar_data_melted$HORSE <- bar_ext_horse
+bar_data_melted$AB_GROUP <- factor(bar_ext_group, levels = groups.order)
+bar_data_melted$TIMEPOINT <- bar_ext_time
+
+# Rename OTUs accordingly
+bar_data_melted$OTU[bar_data_melted$OTU == "f__"] <- "Unclassified"
+bar_data_melted$OTU <- gsub("f__", "", bar_data_melted$OTU)
+bar_data_melted[bar_data_melted$OTU == "Other",]$OTU <- "Other Families"
+bar_data_melted$OTU <- bar_data_melted$OTU
+
+# Individual Horses - 5DG
+bar_data_5dg <- bar_data_melted[bar_data_melted$AB_GROUP == "5DG",]
+png("results/tax_bar_fam_horses_5dg.png", width = 30, height = 15, units = "cm", res = 500)
+ggplot(bar_data_5dg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
   geom_bar(position = "fill", stat = "identity") +
-  scale_fill_manual(values = colours.phyla) +
+  scale_fill_manual(values = colours.families) +
+  labs(title = "Relative Abundance (5DG)",
+       x = "Horses",
+       y = "Relative Abundance (%)",
+       fill = "Top 10 Families"
+  ) +
+  facet_grid(~ HORSE) +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+  )
+dev.off()
+
+# Individual Horses - SSG
+bar_data_ssg <- bar_data_melted[bar_data_melted$AB_GROUP == "SSG",]
+png("results/tax_bar_fam_horses_ssg.png", width = 30, height = 15, units = "cm", res = 500)
+ggplot(bar_data_ssg, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_manual(values = colours.families) +
+  labs(title = "Relative Abundance (SSG)",
+       x = "Horses",
+       y = "Relative Abundance (%)",
+       fill = "Top 10 Families"
+  ) +
+  facet_grid(~ HORSE) +
+  theme(plot.title = element_text(hjust = 0.5),
+        panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank()
+  )
+dev.off()
+
+# Summarized groups (5DG/SSG)
+png("results/tax_bar_fam_sum_5dg_ssg.png", width = 15, height = 15, units = "cm", res = 500)
+ggplot(bar_data_melted, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) + 
+  geom_bar(position = "fill", stat = "identity") +
+  scale_fill_manual(values = colours.families) +
   labs(title = "Mean Abundance (Groups)",
        x = "AB Groups",
        y = "Relative Abundance (%)",
-       fill = "Top 10 Phyla"
+       fill = "Top 10 Families"
   ) +
   facet_grid(~ AB_GROUP) +
   theme(plot.title = element_text(hjust = 0.5),
@@ -749,9 +786,9 @@ per_verr_norm
 
 # Abundance heatmap
 
-abundance_matrix <- matrix(0, 8, length(unique(bar_data_melted$OTU)))
+abundance_matrix <- matrix(0, 6, length(unique(bar_data_melted$OTU)))
 abundance_columns <- unique(bar_data_melted$OTU)
-abundance_rows <- c("SSG_t0", "5DG_t0", "SSG_t1", "5DG_t1", "SSG_t2", "5DG_t2", "CONTROL_t0", "CONTROL_t1")
+abundance_rows <- c("SSG_t0", "5DG_t0", "SSG_t1", "5DG_t1", "SSG_t2", "5DG_t2")
 
 j = 1
 
@@ -769,7 +806,7 @@ for (c in abundance_columns){
 abundance_matrix <- t(abundance_matrix)
 
 rownames(abundance_matrix) <- abundance_columns
-colnames(abundance_matrix) <- c("SSG", "5DG", "SSG", "5DG", "SSG", "5DG", "t0", "t1")
+colnames(abundance_matrix) <- c("SSG", "5DG", "SSG", "5DG", "SSG", "5DG")
 
 png("results/tax_heatmap.png", width = 30, height = 20, units = "cm", res = 500)
 Heatmap(log2(abundance_matrix + 1),
@@ -778,7 +815,7 @@ Heatmap(log2(abundance_matrix + 1),
         #col = c("black", "darkred", "red", "orange", "yellow"),
         #col = c("black", "red"),
         col = c("grey", "orange", "red", "darkred"),
-        column_split = c(rep("t0", 2), rep("t1", 2), rep("t2", 2), rep("CONTROL", 2)),
+        column_split = c(rep("t0", 2), rep("t1", 2), rep("t2", 2)),
         row_title = "Top 10 Phyla",
         name = "log2(Abundance)",
         row_names_gp = gpar(fontsize = 10),
@@ -811,38 +848,18 @@ boxplot.families.melted$TIMEPOINT <- box.ext.time
 G1 <- boxplot.families.melted[boxplot.families.melted$Rank5 == "f__Ruminococcaceae", ]
 
 png("results/tax_box_f_ruminococcaceae_time_group.png", width = 18, height = 10, units = "cm", res = 500)
-ggplot(G1[G1$AB_GROUP != "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
+ggplot(G1, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
+  coord_cartesian(ylim = c(0, 9)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.timepoints,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
-                     size = 3,
-                     paired = TRUE,
-                     method.args = list(exact = FALSE)) +
-  ggtitle("Abundance - Ruminococcaceae (Family)") +
-  theme(plot.title = element_text(hjust = 0.5))
-dev.off()
-
-png("results/tax_box_f_ruminococcaceae_time_control.png", width = 11, height = 10, units = "cm", res = 500)
-ggplot(G1[G1$AB_GROUP == "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
-  geom_boxplot(alpha = 0.9) +
-  geom_jitter(alpha = 0.5) +
-  facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
-  stat_boxplot(geom = "errorbar", width = 0.5) +
-  scale_fill_manual(values = colours.days) +
-  stat_compare_means(comparisons = boxplot.timepoints[1],
-                     alternative = "two.sided",
-                     method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
+                     label.y = c(7.7, 8.1, 8.6),
                      size = 3,
                      paired = TRUE,
                      method.args = list(exact = FALSE)) +
@@ -851,18 +868,18 @@ ggplot(G1[G1$AB_GROUP == "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1)
 dev.off()
 
 png("results/tax_box_f_ruminococcaceae_groups.png", width = 18, height = 10, units = "cm", res = 500)
-ggplot(G1[G1$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
+ggplot(G1, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~TIMEPOINT, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
+  coord_cartesian(ylim = c(0, 8.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.groups) +
   stat_compare_means(comparisons = boxplot.groups,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
+                     label.y = c(8),
                      size = 3,
                      paired = FALSE,
                      method.args = list(exact = FALSE)) +
@@ -873,38 +890,18 @@ dev.off()
 G2 <- boxplot.families.melted[boxplot.families.melted$Rank5 == "f__Enterobacteriaceae", ]
 
 png("results/tax_box_f_enterobacteriaceae_time_group.png", width = 18, height = 10, units = "cm", res = 500)
-ggplot(G2[G2$AB_GROUP != "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
+ggplot(G2, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
+  coord_cartesian(ylim = c(0, 9)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.days) +
   stat_compare_means(comparisons = boxplot.timepoints,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
-                     size = 3,
-                     paired = TRUE,
-                     method.args = list(exact = FALSE)) +
-  ggtitle("Abundance - Enterobacteriaceae (Family)") +
-  theme(plot.title = element_text(hjust = 0.5))
-dev.off()
-
-png("results/tax_box_f_enterobacteriaceae_time_control.png", width = 11, height = 10, units = "cm", res = 500)
-ggplot(G2[G2$AB_GROUP == "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
-  geom_boxplot(alpha = 0.9) +
-  geom_jitter(alpha = 0.5) +
-  facet_wrap(~AB_GROUP, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
-  stat_boxplot(geom = "errorbar", width = 0.5) +
-  scale_fill_manual(values = colours.days) +
-  stat_compare_means(comparisons = boxplot.timepoints[1],
-                     alternative = "two.sided",
-                     method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
+                     label.y = c(7.4, 7.9, 8.5),
                      size = 3,
                      paired = TRUE,
                      method.args = list(exact = FALSE)) +
@@ -913,22 +910,148 @@ ggplot(G2[G2$AB_GROUP == "CONTROL",], aes(x = TIMEPOINT, y = log2(Abundance + 1)
 dev.off()
 
 png("results/tax_box_f_enterobacteriaceae_groups.png", width = 18, height = 10, units = "cm", res = 500)
-ggplot(G2[G2$AB_GROUP != "CONTROL",], aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
+ggplot(G2, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
   geom_boxplot(alpha = 0.9) +
   geom_jitter(alpha = 0.5) +
   facet_wrap(~TIMEPOINT, scale = "free") +
-  coord_cartesian(ylim = c(0, 15.5)) +
-  scale_y_continuous(breaks = c(0, 5, 10, 15)) +
+  coord_cartesian(ylim = c(0, 8.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
   stat_boxplot(geom = "errorbar", width = 0.5) +
   scale_fill_manual(values = colours.groups) +
   stat_compare_means(comparisons = boxplot.groups,
                      alternative = "two.sided",
                      method = "wilcox.test",
-                     label.y = c(12.5, 13.5, 14.5),
+                     label.y = c(7.9),
                      size = 3,
                      paired = FALSE,
                      method.args = list(exact = FALSE)) +
   ggtitle("Abundance - Enterobacteriaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+G3 <- boxplot.families.melted[boxplot.families.melted$Rank5 == "f__Staphylococcaceae", ]
+
+png("results/tax_box_f_staphylococcaceae_time_group.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G3, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~AB_GROUP, scale = "free") +
+  coord_cartesian(ylim = c(0, 9)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.days) +
+  stat_compare_means(comparisons = boxplot.timepoints,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(7.8, 8.1, 8.6),
+                     size = 3,
+                     paired = TRUE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Staphylococcaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+png("results/tax_box_f_staphylococcaceae_groups.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G3, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~TIMEPOINT, scale = "free") +
+  coord_cartesian(ylim = c(0, 8.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups) +
+  stat_compare_means(comparisons = boxplot.groups,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(7.9),
+                     size = 3,
+                     paired = FALSE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Staphylococcaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+G4 <- boxplot.families.melted[boxplot.families.melted$Rank5 == "f__Fusobacteriaceae", ]
+
+png("results/tax_box_f_fusobacteriaceae_time_group.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G4, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~AB_GROUP, scale = "free") +
+  coord_cartesian(ylim = c(0, 11.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.days) +
+  stat_compare_means(comparisons = boxplot.timepoints,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(9.6, 10.2, 10.9),
+                     size = 3,
+                     paired = TRUE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Fusobacteriaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+png("results/tax_box_f_fusobacteriaceae_groups.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G4, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~TIMEPOINT, scale = "free") +
+  coord_cartesian(ylim = c(0, 11.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups) +
+  stat_compare_means(comparisons = boxplot.groups,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(10.2),
+                     size = 3,
+                     paired = FALSE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Fusobacteriaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+G5 <- boxplot.families.melted[boxplot.families.melted$Rank5 == "f__Streptococcaceae", ]
+
+png("results/tax_box_f_streptococcaceae_time_group.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G5, aes(x = TIMEPOINT, y = log2(Abundance + 1), fill = TIMEPOINT)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~AB_GROUP, scale = "free") +
+  coord_cartesian(ylim = c(0, 11.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.days) +
+  stat_compare_means(comparisons = boxplot.timepoints,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(9.6, 10.2, 10.9),
+                     size = 3,
+                     paired = TRUE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Streptococcaceae (Family)") +
+  theme(plot.title = element_text(hjust = 0.5))
+dev.off()
+
+png("results/tax_box_f_streptococcaceae_groups.png", width = 18, height = 10, units = "cm", res = 500)
+ggplot(G5, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
+  geom_boxplot(alpha = 0.9) +
+  geom_jitter(alpha = 0.5) +
+  facet_wrap(~TIMEPOINT, scale = "free") +
+  coord_cartesian(ylim = c(0, 11.5)) +
+  scale_y_continuous(breaks = c(0, 4, 8)) +
+  stat_boxplot(geom = "errorbar", width = 0.5) +
+  scale_fill_manual(values = colours.groups) +
+  stat_compare_means(comparisons = boxplot.groups,
+                     alternative = "two.sided",
+                     method = "wilcox.test",
+                     label.y = c(10.2),
+                     size = 3,
+                     paired = FALSE,
+                     method.args = list(exact = FALSE)) +
+  ggtitle("Abundance - Streptococcaceae (Family)") +
   theme(plot.title = element_text(hjust = 0.5))
 dev.off()
 
@@ -954,39 +1077,46 @@ boxplot.genus.melted$HORSE <- box.ext.horse
 boxplot.genus.melted$AB_GROUP <- factor(box.ext.group, levels = groups.order)
 boxplot.genus.melted$TIMEPOINT <- box.ext.time
 
-G3 <- boxplot.genus.melted[boxplot.genus.melted$Rank6 == "g__Escherichia/Shigella", ]
+G6 <- boxplot.genus.melted[boxplot.genus.melted$Rank6 == "g__Staphylococcus", ]
 
-stat.data <- G3[G3$TIMEPOINT != "t2" & G3$AB_GROUP == "5DG",]
+# 5DG t0 -> t1
+stat.data <- G6[G6$TIMEPOINT != "t2" & G6$AB_GROUP == "5DG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = TRUE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT != "t0" & G3$AB_GROUP == "5DG",]
+# 5DG t1 -> t2
+stat.data <- G6[G6$TIMEPOINT != "t0" & G6$AB_GROUP == "5DG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "less", p.adjust.method = "BH", paired = TRUE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT != "t2" & G3$AB_GROUP == "SSG",]
+# SSG t0 -> t1
+stat.data <- G6[G6$TIMEPOINT != "t2" & G6$AB_GROUP == "SSG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = TRUE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT != "t0" & G3$AB_GROUP == "SSG",]
+# SSG t1 -> t2
+stat.data <- G6[G6$TIMEPOINT != "t0" & G6$AB_GROUP == "SSG",]
 stat.df <- data.frame(GROUP = stat.data$TIMEPOINT, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "less", p.adjust.method = "BH", paired = TRUE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT == "t0" & G3$AB_GROUP != "CONTROL",]
+# SSG vs. 5DG t0
+stat.data <- G6[G6$TIMEPOINT == "t0",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT == "t1" & G3$AB_GROUP != "CONTROL",]
+# SSG vs. 5DG t1
+stat.data <- G6[G6$TIMEPOINT == "t1",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
 
-stat.data <- G3[G3$TIMEPOINT == "t2" & G3$AB_GROUP != "CONTROL",]
+# SSG vs. 5DG t2
+stat.data <- G6[G6$TIMEPOINT == "t2",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
@@ -994,11 +1124,11 @@ stat.res
 h01_ssg <- c()
 h12_ssg <- c()
 i = 0
-for (horse in G3[G3$AB_GROUP == "SSG",]$HORSE){
+for (horse in G6[G6$AB_GROUP == "SSG",]$HORSE){
   i = i + 1
-  h0 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t0",]$Abundance
-  h1 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t1",]$Abundance
-  h2 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t2",]$Abundance
+  h0 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t0",]$Abundance
+  h1 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t1",]$Abundance
+  h2 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t2",]$Abundance
   h01_ssg[i] <- (h1 - h0)
   h12_ssg[i] <- (h2 - h1)
 }
@@ -1006,11 +1136,11 @@ for (horse in G3[G3$AB_GROUP == "SSG",]$HORSE){
 h01_5dg <- c()
 h12_5dg <- c()
 i = 0
-for (horse in G3[G3$AB_GROUP == "5DG",]$HORSE){
+for (horse in G6[G6$AB_GROUP == "5DG",]$HORSE){
   i = i + 1
-  h0 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t0",]$Abundance
-  h1 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t1",]$Abundance
-  h2 <- G3[G3$HORSE == horse & G3$TIMEPOINT == "t2",]$Abundance
+  h0 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t0",]$Abundance
+  h1 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t1",]$Abundance
+  h2 <- G6[G6$HORSE == horse & G6$TIMEPOINT == "t2",]$Abundance
   h01_5dg[i] <- (h1 - h0)
   h12_5dg[i] <- (h2 - h1)
 }
@@ -1030,19 +1160,19 @@ stat.df <- data.frame(GROUP = stat.data$groups, ABU = stat.data$abundances)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
 
-G4 <- boxplot.genus.melted[boxplot.genus.melted$Rank6 == "g__Bacteroides", ]
+G7 <- boxplot.genus.melted[boxplot.genus.melted$Rank6 == "g__Bacteroides", ]
 
-stat.data <- G4[G4$TIMEPOINT == "t0" & G4$AB_GROUP != "CONTROL",]
+stat.data <- G7[G7$TIMEPOINT == "t0",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
 
-stat.data <- G4[G4$TIMEPOINT == "t1" & G4$AB_GROUP != "CONTROL",]
+stat.data <- G7[G7$TIMEPOINT == "t1",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
 
-stat.data <- G4[G4$TIMEPOINT == "t2" & G4$AB_GROUP != "CONTROL",]
+stat.data <- G7[G7$TIMEPOINT == "t2",]
 stat.df <- data.frame(GROUP = stat.data$AB_GROUP, ABU = stat.data$Abundance)
 stat.res <- pairwise.wilcox.test(as.numeric(stat.df$ABU), stat.df$GROUP, alternative = "greater", p.adjust.method = "BH", paired = FALSE, exact = FALSE)
 stat.res
@@ -1050,11 +1180,11 @@ stat.res
 h01_ssg <- c()
 h12_ssg <- c()
 i = 0
-for (horse in G4[G4$AB_GROUP == "SSG",]$HORSE){
+for (horse in G7[G7$AB_GROUP == "SSG",]$HORSE){
   i = i + 1
-  h0 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t0",]$Abundance
-  h1 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t1",]$Abundance
-  h2 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t2",]$Abundance
+  h0 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t0",]$Abundance
+  h1 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t1",]$Abundance
+  h2 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t2",]$Abundance
   h01_ssg[i] <- (h1 - h0)
   h12_ssg[i] <- (h2 - h1)
 }
@@ -1062,11 +1192,11 @@ for (horse in G4[G4$AB_GROUP == "SSG",]$HORSE){
 h01_5dg <- c()
 h12_5dg <- c()
 i = 0
-for (horse in G4[G4$AB_GROUP == "5DG",]$HORSE){
+for (horse in G7[G7$AB_GROUP == "5DG",]$HORSE){
   i = i + 1
-  h0 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t0",]$Abundance
-  h1 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t1",]$Abundance
-  h2 <- G4[G4$HORSE == horse & G4$TIMEPOINT == "t2",]$Abundance
+  h0 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t0",]$Abundance
+  h1 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t1",]$Abundance
+  h2 <- G7[G7$HORSE == horse & G7$TIMEPOINT == "t2",]$Abundance
   h01_5dg[i] <- (h1 - h0)
   h12_5dg[i] <- (h2 - h1)
 }
@@ -1104,16 +1234,16 @@ alpha.ssg.diff.t0.t1 = round(alpha.ssg.t1 - alpha.ssg.t0, 2)
 alpha.ssg.diff.t1.t2 = round(alpha.ssg.t2 - alpha.ssg.t1, 2)
 
 # Abundance of Enterobacteriaceae
-entero.5dg.t0 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t0", ]$Abundance))
-entero.5dg.t1 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t1", ]$Abundance))
-entero.5dg.t2 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t2", ]$Abundance))
+entero.5dg.t0 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t0", ]$Abundance + 1))
+entero.5dg.t1 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t1", ]$Abundance + 1))
+entero.5dg.t2 = log2(median(G2[G2$AB_GROUP == "5DG" & G2$TIMEPOINT == "t2", ]$Abundance + 1))
 
 entero.5dg.diff.t0.t1 = round(entero.5dg.t1 - entero.5dg.t0, 2)
 entero.5dg.diff.t1.t2 = round(entero.5dg.t2 - entero.5dg.t1, 2)
 
-entero.ssg.t0 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t0", ]$Abundance))
-entero.ssg.t1 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t1", ]$Abundance))
-entero.ssg.t2 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t2", ]$Abundance))
+entero.ssg.t0 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t0", ]$Abundance + 1))
+entero.ssg.t1 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t1", ]$Abundance + 1))
+entero.ssg.t2 = log2(median(G2[G2$AB_GROUP == "SSG" & G2$TIMEPOINT == "t2", ]$Abundance + 1))
 
 entero.ssg.diff.t0.t1 = round(entero.ssg.t1 - entero.ssg.t0, 2)
 entero.ssg.diff.t1.t2 = round(entero.ssg.t2 - entero.ssg.t1, 2)
@@ -1189,9 +1319,6 @@ samples.5dg.t0 <- meta.sorted[meta.sorted$AB_Group == "5DG" & meta.sorted$Timepo
 samples.5dg.t1 <- meta.sorted[meta.sorted$AB_Group == "5DG" & meta.sorted$Timepoint == "t1", ]$SampleID
 samples.5dg.t2 <- meta.sorted[meta.sorted$AB_Group == "5DG" & meta.sorted$Timepoint == "t2", ]$SampleID
 
-samples.control.t0 <- meta.sorted[meta.sorted$AB_Group == "CONTROL" & meta.sorted$Timepoint == "t0", ]$SampleID
-samples.control.t1 <- meta.sorted[meta.sorted$AB_Group == "CONTROL" & meta.sorted$Timepoint == "t1", ]$SampleID
-
 samples.taxa <- c("p__Actinomycetota",
                   "p__Armatimonadota",
                   "p__Bacillota",
@@ -1229,8 +1356,6 @@ c3 = c()
 c4 = c()
 c5 = c()
 c6 = c()
-c7 = c()
-c8 = c()
 x = 1
 
 for (t in samples.taxa){
@@ -1284,27 +1409,12 @@ for (t in samples.taxa){
   t6 <- round(t5, 2)
   c6[x] <- t6
   
-  t2 <- t1[samples.control.t0]
-  t3 <- colSums(t2)
-  t4 <- sum(t3)/length(samples.control.t0)
-  t5 <- (t4/min(sample_depth))*100
-  t6 <- round(t5, 2)
-  c7[x] <- t6
-  
-  t2 <- t1[samples.control.t1]
-  t3 <- colSums(t2)
-  t4 <- sum(t3)/length(samples.control.t1)
-  t5 <- (t4/min(sample_depth))*100
-  t6 <- round(t5, 2)
-  c8[x] <- t6
-
   x = x + 1
 }
 
 taxa.abundancies <- data.frame(TAXA = samples.taxa,
                                SSG_t0 = c1, SSG_t1 = c2, SSG_t2 = c3,
-                               FDG_t0 = c4, FDG_t1 = c5, FDG_t2 = c6,
-                               CON_t0 = c7, CON_t1 = c8
+                               FDG_t0 = c4, FDG_t1 = c5, FDG_t2 = c6
                                )
 
 write.csv(taxa.abundancies, file = "results/tab_otu_species_mean.csv", quote = FALSE, row.names = FALSE)
@@ -1352,215 +1462,6 @@ beta.df <- data.frame(GROUP = c(rep("Intra", length(beta.intra.t1)), rep("Inter"
 beta.res <- pairwise.wilcox.test(beta.df$VAL, beta.df$GROUP, paired = FALSE, alternative = "less", p.adjust.method = "BH")
 
 # --------------------------------------------------------------------------------------------------------
-
-# [07] Calculating log2FC on family level
-
-df_ssg_t0 <- NULL
-df_ssg_t1 <- NULL
-df_ssg_t2 <- NULL
-
-df_5dg_t0 <- NULL
-df_5dg_t1 <- NULL
-df_5dg_t2 <- NULL
-
-taxa_list <- unique(data.otu.rarefy$Rank5)
-
-for (t in taxa_list){
-  t1 <- data.otu.rarefy[data.otu.rarefy$Rank1 == t |
-                        data.otu.rarefy$Rank2 == t |
-                        data.otu.rarefy$Rank3 == t |
-                        data.otu.rarefy$Rank4 == t |
-                        data.otu.rarefy$Rank5 == t |
-                        data.otu.rarefy$Rank6 == t |
-                        data.otu.rarefy$Rank7 == t, ]
-  
-  # Control
-  c1 <- t1[samples.control.t0]
-  c2 <- colSums(c1)
-  c3 <- median(c2)
-  
-  if (c3 > 0){
-    # SSG
-    s1 <- t1[samples.ssg.t0]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_ssg_t0, s5) -> df_ssg_t0
-    
-    s1 <- t1[samples.ssg.t1]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_ssg_t1, s5) -> df_ssg_t1
-    
-    s1 <- t1[samples.ssg.t2]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_ssg_t2, s5) -> df_ssg_t2
-    
-    # 5DG
-    s1 <- t1[samples.5dg.t0]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_5dg_t0, s5) -> df_5dg_t0
-    
-    s1 <- t1[samples.5dg.t1]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_5dg_t1, s5) -> df_5dg_t1
-    
-    s1 <- t1[samples.5dg.t2]
-    s2 <- colSums(s1)
-    s3 <- (s2 - c3)/c3
-    s4 <- sign(s3)*round(log(abs(s3), 2), 2)
-    s5 <- c(t, s4)
-    rbind(df_5dg_t2, s5) -> df_5dg_t2
-  }
-}
-
-df_ssg_t0[df_ssg_t0 == "NaN"] <- "0"
-df_ssg_t1[df_ssg_t1 == "NaN"] <- "0"
-df_ssg_t2[df_ssg_t2 == "NaN"] <- "0"
-
-df_5dg_t0[df_5dg_t0 == "NaN"] <- "0"
-df_5dg_t1[df_5dg_t1 == "NaN"] <- "0"
-df_5dg_t2[df_5dg_t2 == "NaN"] <- "0"
-
-df_ssg_t0 <- as.data.frame(df_ssg_t0)
-df_ssg_t1 <- as.data.frame(df_ssg_t1)
-df_ssg_t2 <- as.data.frame(df_ssg_t2)
-
-df_5dg_t0 <- as.data.frame(df_5dg_t0)
-df_5dg_t1 <- as.data.frame(df_5dg_t1)
-df_5dg_t2 <- as.data.frame(df_5dg_t2)
-
-new.names.old = meta.sorted[match(colnames(df_ssg_t0)[c(-1)], meta.sorted$SampleID),]
-colnames(df_ssg_t0) <- c("Family", new.names.old$HorseID)
-df_ssg_t0 <- df_ssg_t0[,order(colnames(df_ssg_t0))]
-df_ssg_t0 <- df_ssg_t0[order(df_ssg_t0$Family),]
-
-new.names.old = meta.sorted[match(colnames(df_ssg_t1)[c(-1)], meta.sorted$SampleID),]
-colnames(df_ssg_t1) <- c("Family", new.names.old$HorseID)
-df_ssg_t1 <- df_ssg_t1[,order(colnames(df_ssg_t1))]
-df_ssg_t1 <- df_ssg_t1[order(df_ssg_t1$Family),]
-
-new.names.old = meta.sorted[match(colnames(df_ssg_t2)[c(-1)], meta.sorted$SampleID),]
-colnames(df_ssg_t2) <- c("Family", new.names.old$HorseID)
-df_ssg_t2 <- df_ssg_t2[,order(colnames(df_ssg_t2))]
-df_ssg_t2 <- df_ssg_t2[order(df_ssg_t2$Family),]
-
-new.names.old = meta.sorted[match(colnames(df_5dg_t0)[c(-1)], meta.sorted$SampleID),]
-colnames(df_5dg_t0) <- c("Family", new.names.old$HorseID)
-df_5dg_t0 <- df_5dg_t0[,order(colnames(df_5dg_t0))]
-df_5dg_t0 <- df_5dg_t0[order(df_5dg_t0$Family),]
-
-new.names.old = meta.sorted[match(colnames(df_5dg_t1)[c(-1)], meta.sorted$SampleID),]
-colnames(df_5dg_t1) <- c("Family", new.names.old$HorseID)
-df_5dg_t1 <- df_5dg_t1[,order(colnames(df_5dg_t1))]
-df_5dg_t1 <- df_5dg_t1[order(df_5dg_t1$Family),]
-
-new.names.old = meta.sorted[match(colnames(df_5dg_t2)[c(-1)], meta.sorted$SampleID),]
-colnames(df_5dg_t2) <- c("Family", new.names.old$HorseID)
-df_5dg_t2 <- df_5dg_t2[,order(colnames(df_5dg_t2))]
-df_5dg_t2 <- df_5dg_t2[order(df_5dg_t2$Family),]
-
-list_of_datasets <- list("SSG_t0" = df_ssg_t0,
-                         "SSG_t1" = df_ssg_t1,
-                         "SSG_t2" = df_ssg_t2,
-                         "5DG_t0" = df_5dg_t0,
-                         "5DG_t1" = df_5dg_t1,
-                         "5DG_t2" = df_5dg_t2
-                         )
-
-write.xlsx(list_of_datasets, file = "results/tab_otu_family_fc.xlsx")
-
-# Create Table of P-Values for each families log2FC
-
-tax_fam <- unique(c(df_ssg_t0$Family, df_ssg_t1$Family, df_ssg_t2$Family,
-                    df_5dg_t0$Family, df_5dg_t1$Family, df_5dg_t2$Family))
-
-l01 <- c()
-l02 <- c()
-l03 <- c()
-l04 <- c()
-l05 <- c()
-l06 <- c()
-l07 <- c()
-l08 <- c()
-l09 <- c()
-l10 <- c()
-
-for (tax in tax_fam){
-  
-  stat.df <- c()
-  l01 <- c(l01, tax)
-  
-  tmp_ssg_t0 <- as.numeric(df_ssg_t0[df_ssg_t0$Family == tax, 1:(length(df_ssg_t0) - 1)])
-  tmp_ssg_t1 <- as.numeric(df_ssg_t1[df_ssg_t1$Family == tax, 1:(length(df_ssg_t1) - 1)])
-  tmp_ssg_t2 <- as.numeric(df_ssg_t2[df_ssg_t2$Family == tax, 1:(length(df_ssg_t2) - 1)])
-  tmp_5dg_t0 <- as.numeric(df_5dg_t0[df_5dg_t0$Family == tax, 1:(length(df_5dg_t0) - 1)])
-  tmp_5dg_t1 <- as.numeric(df_5dg_t1[df_5dg_t1$Family == tax, 1:(length(df_5dg_t1) - 1)])
-  tmp_5dg_t2 <- as.numeric(df_5dg_t2[df_5dg_t2$Family == tax, 1:(length(df_5dg_t2) - 1)])
-  
-  stat.df <- data.frame(GROUP = c(rep("t0", length(tmp_ssg_t0)), rep("t1", length(tmp_ssg_t1))),
-                        AMR = c(tmp_ssg_t0, tmp_ssg_t1))
-  l02 <- c(l02, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-
-  stat.df <- data.frame(GROUP = c(rep("t1", length(tmp_ssg_t1)), rep("t2", length(tmp_ssg_t2))),
-                        AMR = c(tmp_ssg_t1, tmp_ssg_t2))
-  l03 <- c(l03, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("t0", length(tmp_ssg_t0)), rep("t2", length(tmp_ssg_t2))),
-                        AMR = c(tmp_ssg_t0, tmp_ssg_t2))
-  l04 <- c(l04, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("t0", length(tmp_5dg_t0)), rep("t1", length(tmp_5dg_t1))),
-                        AMR = c(tmp_5dg_t0, tmp_5dg_t1))
-  l05 <- c(l05, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("t1", length(tmp_5dg_t1)), rep("t2", length(tmp_5dg_t2))),
-                        AMR = c(tmp_5dg_t1, tmp_5dg_t2))
-  l06 <- c(l06, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("t0", length(tmp_5dg_t0)), rep("t2", length(tmp_5dg_t2))),
-                        AMR = c(tmp_5dg_t0, tmp_5dg_t2))
-  l07 <- c(l07, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = TRUE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("SSG", length(tmp_ssg_t0)), rep("5DG", length(tmp_5dg_t0))),
-                        AMR = c(tmp_ssg_t0, tmp_5dg_t0))
-  l08 <- c(l08, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = FALSE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("SSG", length(tmp_ssg_t1)), rep("5DG", length(tmp_5dg_t1))),
-                        AMR = c(tmp_ssg_t1, tmp_5dg_t1))
-  l09 <- c(l09, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = FALSE, exact = FALSE)$p.value)
-  
-  stat.df <- data.frame(GROUP = c(rep("SSG", length(tmp_ssg_t2)), rep("5DG", length(tmp_5dg_t2))),
-                        AMR = c(tmp_ssg_t2, tmp_5dg_t2))
-  l10 <- c(l10, pairwise.wilcox.test(as.numeric(stat.df$AMR), stat.df$GROUP, alternative = "two.sided", p.adjust.method = "BH", paired = FALSE, exact = FALSE)$p.value)
-}
-
-p.val.df <- data.frame("Taxa" = l01,
-                       "SSG_t0_t1" = round(l02, 2),
-                       "SSG_t1_t2" = round(l03, 2),
-                       "SSG_t0_t2" = round(l04, 2),
-                       "5DG_t0_t1" = round(l05, 2),
-                       "5DG_t1_t2" = round(l06, 2),
-                       "5DG_t0_t1" = round(l07, 2),
-                       "t0_SSG_5DG" = round(l08, 2),
-                       "t1_SSG_5DG" = round(l09, 2),
-                       "t2_SSG_5DG" = round(l10, 2)
-)
-
-p.val.df[p.val.df == "NaN"] <- 1
-write.xlsx(p.val.df, file = "results/tab_otu_family_fc_p_val.xlsx")
 
 # ESBL Test
 
