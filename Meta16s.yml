@@ -1,9 +1,9 @@
 name: Meta16s
 channels:
-  - conda-forge
   - bioconda
-  - r
+  - conda-forge
   - defaults
+  - r
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=1_gnu
@@ -81,6 +81,7 @@ dependencies:
   - prompt_toolkit=1.0.15=py_1
   - pthread-stubs=0.4=h36c2ea0_1001
   - ptyprocess=0.7.0=pyhd3deb0d_0
+  - pyfasta=0.5.2=py27_0
   - pygments=2.5.2=py_0
   - pynast=1.2.2=py_2
   - pyparsing=2.4.7=pyh9f0ad1d_0
@@ -132,4 +133,3 @@ dependencies:
   - zlib=1.2.11=h516909a_1010
   - pip:
       - multiprocessing==2.6.2.1
-      - pyfasta==0.5.2
