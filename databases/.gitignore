@@ -4,3 +4,4 @@
 *
 # Add an exception for this file
 !.gitignore
+!42_Bacterial_Phyla_2022.csv
