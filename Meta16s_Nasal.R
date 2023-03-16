@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s_Nasal.R
 # Author: Silver A. Wolf
-# Last Modified: Mon, 27.02.2023
-# Version: 0.0.2
+# Last Modified: Thu, 16.03.2023
+# Version: 0.0.3
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -35,14 +35,10 @@ library("vegan")
 data.biom <- import_biom("output/final_otu_table_clean.biom", parseFunction = parse_taxonomy_default)
 
 # Metadata
-meta <- read.xlsx("metadata/22_02_Horses_Overview.xlsx", sheet = 3)
+meta <- read.xlsx("metadata/23_03_Horses_Overview.xlsx", sheet = 2)
 
 # Define Groups
 groups.order <- c("SSG", "5DG")
-
-# Remove any samples that might not be of interest
-meta.filtered <- meta[meta$AB_Group %in% groups.order, ]
-data.biom <- prune_samples(sample_names(data.biom) %in% meta.filtered$SampleID, data.biom)
 
 # --------------------------------------------------------------------------------------------------------
 
@@ -77,7 +73,7 @@ braycurtis.pcoa <- ordinate(physeq = data.rarefy, method = "PCoA", distance = "b
 data.pcoa <- as.data.frame(braycurtis.pcoa$vectors, row.names = NULL, optional = FALSE, cut.names = FALSE, col.names = names(braycurtis.pcoa$vectors), fix.empty.names = TRUE, stringsAsFactors = default.stringsAsFactors())
 
 # Add Metadata
-meta.sorted = meta.filtered[match(rownames(data.alpha), meta.filtered$SampleID),]
+meta.sorted = meta[match(rownames(data.alpha), meta$SampleID),]
 data.alpha$HORSE = meta.sorted$HorseID
 data.alpha$AB_GROUP = factor(meta.sorted$AB_Group, levels = groups.order)
 data.alpha$TIMEPOINT = meta.sorted$Timepoint
@@ -177,7 +173,7 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
@@ -224,7 +220,7 @@ ggscatter(data.pcoa[data.pcoa$AB_GROUP == "SSG", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
@@ -271,7 +267,7 @@ ggscatter(data.pcoa[data.pcoa$AB_GROUP == "5DG", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "TIMEPOINT",
           shape = "TIMEPOINT",
@@ -318,7 +314,7 @@ ggscatter(data.pcoa,
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
@@ -357,7 +353,7 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t0", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
@@ -396,7 +392,7 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t1", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
@@ -435,7 +431,7 @@ ggscatter(data.pcoa[data.pcoa$TIMEPOINT == "t2", ],
           y = "Axis.2",
           xlab = paste("PC1 (", eigenvalue_pc1, "%)", sep = ""),
           ylab = paste("PC2 (", eigenvalue_pc2, "%)", sep = ""),
-          xlim = c(-0.3, 0.4),
+          xlim = c(-0.30, 0.45),
           ylim = c(-0.35, 0.35),
           color = "AB_GROUP",
           shape = "AB_GROUP",
@@ -599,7 +595,7 @@ colours.phyla = c("Acidobacteriota" = "#48a0a1",
                   "Fusobacteriota" = "#d4d7db",
                   "Other Phyla" = "#95f8d6",
                   "Pseudomonadota" = "#a7ccf1",
-                  "Verrucomicrobiota" = "#e4a080"
+                  "Candidatus Saccharibacteria" = "#e4a080"
                   )
 
 bar_ext_horse = c()
@@ -677,6 +673,68 @@ ggplot(bar_data_melted, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
         panel.grid.minor = element_blank()
         )
 dev.off()
+
+# Abundance heatmap (phyla)
+abundance_matrix <- matrix(0, 6, length(unique(bar_data_melted$OTU)))
+abundance_columns <- unique(bar_data_melted$OTU)
+abundance_rows <- c("SSG_t0", "5DG_t0", "SSG_t1", "5DG_t1", "SSG_t2", "5DG_t2")
+
+j = 1
+
+for (c in abundance_columns){
+  i = 1
+  for (r in abundance_rows){
+    group <- strsplit(r, "_")[[1]][1]
+    timepoint <- strsplit(r, "_")[[1]][2]
+    abundance_matrix[i, j] <- mean(bar_data_melted[bar_data_melted$TIMEPOINT == timepoint & bar_data_melted$AB_GROUP == group & bar_data_melted$OTU == c,]$Abundance)
+    i = i + 1
+  }
+  j = j + 1
+}
+
+abundance_matrix <- t(abundance_matrix)
+
+rownames(abundance_matrix) <- abundance_columns
+colnames(abundance_matrix) <- c("SSG", "5DG", "SSG", "5DG", "SSG", "5DG")
+
+png("results/tax_heatmap_phyla.png", width = 30, height = 20, units = "cm", res = 500)
+Heatmap(log2(abundance_matrix + 1),
+        cluster_rows = TRUE,
+        cluster_columns = FALSE,
+        #col = c("black", "darkred", "red", "orange", "yellow"),
+        #col = c("black", "red"),
+        col = c("grey", "orange", "red", "darkred"),
+        column_split = c(rep("t0", 2), rep("t1", 2), rep("t2", 2)),
+        row_title = "Top 10 Phyla",
+        name = "log2(Abundance)",
+        row_names_gp = gpar(fontsize = 10),
+        column_names_gp = gpar(fontsize = 10)
+)
+dev.off()
+
+# Percentages of individual phyla
+per_taxa_total = sum(bar_data_melted$Abundance)/length(sample_depth)
+
+per_bact_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacteroidota", ]$Abundance)/length(sample_depth)
+per_bact_norm = (per_bact_total/per_taxa_total) * 100
+
+per_firm_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacillota", ]$Abundance)/length(sample_depth)
+per_firm_norm = (per_firm_total/per_taxa_total) * 100
+
+per_prot_total = sum(bar_data_melted[bar_data_melted$OTU == "Pseudomonadota", ]$Abundance)/length(sample_depth)
+per_prot_norm = (per_prot_total/per_taxa_total) * 100
+
+per_spir_total = sum(bar_data_melted[bar_data_melted$OTU == "Spirochaetota", ]$Abundance)/length(sample_depth)
+per_spir_norm = (per_spir_total/per_taxa_total) * 100
+
+per_verr_total = sum(bar_data_melted[bar_data_melted$OTU == "Verrucomicrobiota", ]$Abundance)/length(sample_depth)
+per_verr_norm = (per_verr_total/per_taxa_total) * 100
+
+per_bact_norm
+per_firm_norm
+per_prot_norm
+per_spir_norm
+per_verr_norm
 
 # Barplots (family)
 bar_data_aggregated <- aggregate_top_taxa2(data.rarefy, 9, "Rank5")
@@ -760,32 +818,7 @@ ggplot(bar_data_melted, aes(fill = OTU, y = Abundance, x = TIMEPOINT)) +
   )
 dev.off()
 
-# Percentages of individual taxa
-per_taxa_total = sum(bar_data_melted$Abundance)/length(sample_depth)
-
-per_bact_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacteroidota", ]$Abundance)/length(sample_depth)
-per_bact_norm = (per_bact_total/per_taxa_total) * 100
-
-per_firm_total = sum(bar_data_melted[bar_data_melted$OTU == "Bacillota", ]$Abundance)/length(sample_depth)
-per_firm_norm = (per_firm_total/per_taxa_total) * 100
-
-per_prot_total = sum(bar_data_melted[bar_data_melted$OTU == "Pseudomonadota", ]$Abundance)/length(sample_depth)
-per_prot_norm = (per_prot_total/per_taxa_total) * 100
-
-per_spir_total = sum(bar_data_melted[bar_data_melted$OTU == "Spirochaetota", ]$Abundance)/length(sample_depth)
-per_spir_norm = (per_spir_total/per_taxa_total) * 100
-
-per_verr_total = sum(bar_data_melted[bar_data_melted$OTU == "Verrucomicrobiota", ]$Abundance)/length(sample_depth)
-per_verr_norm = (per_verr_total/per_taxa_total) * 100
-
-per_bact_norm
-per_firm_norm
-per_prot_norm
-per_spir_norm
-per_verr_norm
-
-# Abundance heatmap
-
+# Abundance heatmap (family)
 abundance_matrix <- matrix(0, 6, length(unique(bar_data_melted$OTU)))
 abundance_columns <- unique(bar_data_melted$OTU)
 abundance_rows <- c("SSG_t0", "5DG_t0", "SSG_t1", "5DG_t1", "SSG_t2", "5DG_t2")
@@ -808,7 +841,7 @@ abundance_matrix <- t(abundance_matrix)
 rownames(abundance_matrix) <- abundance_columns
 colnames(abundance_matrix) <- c("SSG", "5DG", "SSG", "5DG", "SSG", "5DG")
 
-png("results/tax_heatmap.png", width = 30, height = 20, units = "cm", res = 500)
+png("results/tax_heatmap_fam.png", width = 30, height = 20, units = "cm", res = 500)
 Heatmap(log2(abundance_matrix + 1),
         cluster_rows = TRUE,
         cluster_columns = FALSE,
@@ -816,7 +849,7 @@ Heatmap(log2(abundance_matrix + 1),
         #col = c("black", "red"),
         col = c("grey", "orange", "red", "darkred"),
         column_split = c(rep("t0", 2), rep("t1", 2), rep("t2", 2)),
-        row_title = "Top 10 Phyla",
+        row_title = "Top 10 Families",
         name = "log2(Abundance)",
         row_names_gp = gpar(fontsize = 10),
         column_names_gp = gpar(fontsize = 10)
@@ -824,7 +857,6 @@ Heatmap(log2(abundance_matrix + 1),
 dev.off()
 
 # Boxplots for abundance of specific families
-
 boxplot.families.biom <- aggregate_top_taxa2(data.rarefy, 22, "Rank5")
 boxplot.families.melted <- psmelt(boxplot.families.biom)
 
@@ -1056,7 +1088,6 @@ ggplot(G5, aes(x = AB_GROUP, y = log2(Abundance + 1), fill = AB_GROUP)) +
 dev.off()
 
 # Analyses for abundance of genus
-
 boxplot.genus.biom <- aggregate_top_taxa2(data.rarefy, 22, "Rank6")
 boxplot.genus.melted <- psmelt(boxplot.genus.biom)
 
