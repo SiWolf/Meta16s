@@ -1,8 +1,8 @@
 # --------------------------------------------------------------------------------------------------------
 # Title: Meta16s_Nasal.R
 # Author: Silver A. Wolf
-# Last Modified: Thu, 16.03.2023
-# Version: 0.0.3
+# Last Modified: Tue, 18.07.2023
+# Version: 0.0.4
 # --------------------------------------------------------------------------------------------------------
 
 # Libraries
@@ -10,6 +10,7 @@
 library("circlize")
 library("ComplexHeatmap")
 library("dplyr")
+library("edgeR")
 library("ggplot2")
 library("ggpubr")
 library("kableExtra")
@@ -22,6 +23,7 @@ library("micropower")
 library("randomcoloR")
 library("openxlsx")
 library("parallel")
+library("PathoStat")
 library("phyloseq")
 library("sp")
 library("stringr")
@@ -83,6 +85,7 @@ data.alpha.rarefy$TIMEPOINT = meta.sorted[meta.sorted$SampleID %in% rownames(dat
 data.pcoa$HORSE = meta.sorted[meta.sorted$SampleID %in% rownames(data.alpha.rarefy),]$HorseID
 data.pcoa$AB_GROUP = factor(meta.sorted[meta.sorted$SampleID %in% rownames(data.alpha.rarefy),]$AB_Group, levels = groups.order)
 data.pcoa$TIMEPOINT = meta.sorted[meta.sorted$SampleID %in% rownames(data.alpha.rarefy),]$Timepoint
+data.pcoa$TIME_GROUP = paste(meta.sorted$Timepoint, meta.sorted$AB_Group, sep = " ")
 
 # Export Diversities
 write.csv(data.alpha, file = "results/tab_div_alpha_raw.csv", quote = FALSE)
@@ -1510,3 +1513,68 @@ fisher.test(esbl_all)
 
 esbl_all_ab <- esbl_all[1:2,]
 fisher.test(esbl_all_ab)
+
+# --------------------------------------------------------------------------------------------------------
+
+# Differential Taxa Analysis
+
+# Family Level
+edger.aggretated <- aggregate_top_taxa2(data.biom, 10^5, "Rank5")
+
+# Prepare data for edgeR analysis
+edger.groups <- data.pcoa[with(data.pcoa, order(rownames(data.pcoa))), ]$TIME_GROUP
+edger.dge <- phyloseq_to_edgeR(edger.aggretated, group = edger.groups)
+
+# C1 - SSG: t0 vs. t1
+edger.res.c1 <- exactTest(edger.dge, pair = c("t0 SSG", "t1 SSG"))
+edger.top.c1 <- topTags(edger.res.c1, n = nrow(edger.res.c1$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c1 <- edger.top.c1$table[edger.top.c1$table$FDR < 0.05 & abs(edger.top.c1$table$logFC) > 1, ]
+write.csv(edger.top.c1$table, file = "results/tab_edger_ssg_t0_t1.csv", quote = FALSE)
+
+# C2 - SSG: t1 vs. t2
+edger.res.c2 <- exactTest(edger.dge, pair = c("t1 SSG", "t2 SSG"))
+edger.top.c2 <- topTags(edger.res.c2, n = nrow(edger.res.c2$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c2 <- edger.top.c2$table[edger.top.c2$table$FDR < 0.05 & abs(edger.top.c2$table$logFC) > 1, ]
+write.csv(edger.top.c2$table, file = "results/tab_edger_ssg_t1_t2.csv", quote = FALSE)
+
+# C3 - SSG: t0 vs. t2
+edger.res.c3 <- exactTest(edger.dge, pair = c("t0 SSG", "t2 SSG"))
+edger.top.c3 <- topTags(edger.res.c3, n = nrow(edger.res.c3$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c3 <- edger.top.c3$table[edger.top.c3$table$FDR < 0.05 & abs(edger.top.c3$table$logFC) > 1, ]
+write.csv(edger.top.c3$table, file = "results/tab_edger_ssg_t0_t2.csv", quote = FALSE)
+
+# C4 - 5DG: t0 vs. t1
+edger.res.c4 <- exactTest(edger.dge, pair = c("t0 5DG", "t1 5DG"))
+edger.top.c4 <- topTags(edger.res.c4, n = nrow(edger.res.c4$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c4 <- edger.top.c4$table[edger.top.c4$table$FDR < 0.05 & abs(edger.top.c4$table$logFC) > 1, ]
+write.csv(edger.top.c4$table, file = "results/tab_edger_5dg_t0_t1.csv", quote = FALSE)
+
+# C5 - 5DG: t1 vs. t2
+edger.res.c5 <- exactTest(edger.dge, pair = c("t1 5DG", "t2 5DG"))
+edger.top.c5 <- topTags(edger.res.c5, n = nrow(edger.res.c5$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c5 <- edger.top.c5$table[edger.top.c5$table$FDR < 0.05 & abs(edger.top.c5$table$logFC) > 1, ]
+write.csv(edger.top.c5$table, file = "results/tab_edger_5dg_t1_t2.csv", quote = FALSE)
+
+# C6 - 5DG: t0 vs. t2
+edger.res.c6 <- exactTest(edger.dge, pair = c("t0 5DG", "t2 5DG"))
+edger.top.c6 <- topTags(edger.res.c6, n = nrow(edger.res.c6$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c6 <- edger.top.c6$table[edger.top.c6$table$FDR < 0.05 & abs(edger.top.c6$table$logFC) > 1, ]
+write.csv(edger.top.c6$table, file = "results/tab_edger_5dg_t0_t2.csv", quote = FALSE)
+
+# C7 - t0: SSG vs. 5DG
+edger.res.c7 <- exactTest(edger.dge, pair = c("t0 SSG", "t0 5DG"))
+edger.top.c7 <- topTags(edger.res.c7, n = nrow(edger.res.c7$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c7 <- edger.top.c7$table[edger.top.c7$table$FDR < 0.05 & abs(edger.top.c7$table$logFC) > 1, ]
+write.csv(edger.top.c7$table, file = "results/tab_edger_t0_ssg_5dg.csv", quote = FALSE)
+
+# C8 - t1: SSG vs. 5DG
+edger.res.c8 <- exactTest(edger.dge, pair = c("t1 SSG", "t1 5DG"))
+edger.top.c8 <- topTags(edger.res.c8, n = nrow(edger.res.c8$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c8 <- edger.top.c8$table[edger.top.c8$table$FDR < 0.05 & abs(edger.top.c8$table$logFC) > 1, ]
+write.csv(edger.top.c8$table, file = "results/tab_edger_t1_ssg_5dg.csv", quote = FALSE)
+
+# C9 - t2: SSG vs. 5DG
+edger.res.c9 <- exactTest(edger.dge, pair = c("t2 SSG", "t2 5DG"))
+edger.top.c9 <- topTags(edger.res.c9, n = nrow(edger.res.c9$table), adjust.method = "BH", sort.by = "logFC")
+edger.sel.c9 <- edger.top.c9$table[edger.top.c9$table$FDR < 0.05 & abs(edger.top.c9$table$logFC) > 1, ]
+write.csv(edger.top.c9$table, file = "results/tab_edger_t2_ssg_5dg.csv", quote = FALSE)
