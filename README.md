@@ -3,7 +3,7 @@
 # Meta16s
 >An all-in-one solution for streamlined 16s analyses.
 
-![Meta16s Workflow](https://github.com/SiWolf/Meta16s/blob/master/workflow.jpg)
+![Meta16s Workflow](https://github.com/SiWolf/Meta16s/blob/master/workflow.png)
 
 Meta16s is an all-in-one pipeline for the analysis of 16s NGS data. Meta16s takes raw paired-end NGS reads (.fastq.gz) as an input in order to generate a cleaned taxonomic abundance file (biom and tsv).
 
